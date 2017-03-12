@@ -20,7 +20,7 @@ public class Configurator
             prop.load(Configurator.class.getResourceAsStream("rtsp.properties"));
             // загружаем кол-во типов камер
             int count = Integer.parseInt(prop.getProperty("count"));
-int c = 0;
+
             for (int i = 0; i < count; i++)
             {
                 rtspDataList.put(prop.getProperty("type" + i),
