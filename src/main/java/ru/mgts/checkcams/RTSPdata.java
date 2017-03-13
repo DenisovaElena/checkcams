@@ -1,3 +1,5 @@
+package ru.mgts.checkcams;
+
 import java.util.List;
 
 /**

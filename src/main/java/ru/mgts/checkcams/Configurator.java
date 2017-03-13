@@ -1,4 +1,5 @@
-import java.io.*;
+package ru.mgts.checkcams;
+
 import java.util.*;
 
 /**
@@ -17,7 +18,8 @@ public class Configurator
         try
         {
             // загружаем в манипулятор свойств prop данные из файла со свойствами
-            prop.load(Configurator.class.getResourceAsStream("rtsp.properties"));
+            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            prop.load(classLoader.getResourceAsStream("rtsp.properties"));
             // загружаем кол-во типов камер
             int count = Integer.parseInt(prop.getProperty("count"));
 

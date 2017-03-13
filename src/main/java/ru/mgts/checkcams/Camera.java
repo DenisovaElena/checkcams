@@ -1,3 +1,5 @@
+package ru.mgts.checkcams;
+
 /**
  * Created by Dummy on 08.03.2017.
  */
