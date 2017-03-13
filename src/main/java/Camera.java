@@ -6,12 +6,14 @@ public class Camera
     String name;
     String ipAddress;
     String type;
+    String camPort;
 
-    public Camera(String name, String ipAddress, String type)
+    public Camera(String name, String ipAddress, String type, String camPort)
     {
         this.name = name;
         this.ipAddress = ipAddress;
         this.type = type;
+        this.camPort = camPort;
     }
 
     public String getName()
@@ -27,5 +29,10 @@ public class Camera
     public String getType()
     {
         return type;
+    }
+
+    public String getCamPort()
+    {
+        return camPort;
     }
 }

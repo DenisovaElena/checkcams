@@ -10,15 +10,17 @@ public class RTSPdata
     String pass;
     String port;
     String codec;
+    Boolean ispvn;
     List<String> channels;
 
-    public RTSPdata(String type, String login, String pass, String port, String codec, List<String> channels)
+    public RTSPdata(String type, String login, String pass, String port, String codec, Boolean ispvn, List<String> channels)
     {
         this.type = type;
         this.login = login;
         this.pass = pass;
         this.port = port;
         this.codec = codec;
+        this.ispvn = ispvn;
         this.channels = channels;
     }
 
@@ -45,6 +47,11 @@ public class RTSPdata
     public String getCodec()
     {
         return codec;
+    }
+
+    public Boolean getIspvn()
+    {
+        return ispvn;
     }
 
     public List<String> getChannels()

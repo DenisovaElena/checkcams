@@ -32,7 +32,9 @@ public class Configurator
                                 prop.getProperty("pass" + i),
                                 prop.getProperty("port" + i),
                                 prop.getProperty("codec" + i),
-                                Arrays.asList(prop.getProperty("channels" + i).split(";"))));
+                                Boolean.parseBoolean(prop.getProperty("ispvn" + i)),
+                                Arrays.asList(prop.getProperty("channels" + i).split(";"))
+                                ));
             }
         }
         catch (Exception e)

@@ -20,6 +20,7 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -29,8 +30,8 @@ import java.util.concurrent.TimeUnit;
 
 public class CControl
 {
-    public static final String DATE_TIME_PATTERN = "yyyy-MM-dd_@HH-mm";
-    public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_PATTERN);
+    public static final String DATE_PATTERN = "yyyy-MM-dd";
+    public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(DATE_PATTERN);
 
     public static void main(String[] args)
     {
@@ -43,7 +44,9 @@ public class CControl
             //saveScreen("rtsp://localhost:5544/pusya", "C:\\screens\\test.png", mediaPlayer);
 
             String screensPath = "C:\\screens\\";
+            // инициализируем хэш-карту - классификатор типов камер. Ключ - тип камеры, значение - структура RTSPdata
             Map<String, RTSPdata> rtspDataList = Configurator.loadConfigs();
+            // инициализируем массив камер из экселя
             List<Camera> cameraList = readFromExcel("C:\\camertest.xls");
             for (int i = 0; i < cameraList.size(); i++)
             {
@@ -52,7 +55,7 @@ public class CControl
                     Camera camera = cameraList.get(i);
                     if (!pingHost(camera.getIpAddress()))
                     {
-                        throw new Exception("No ping from camera " +
+                        throw new Exception("HALT! No ping from camera " +
                                 camera.getName() + " with ip " + camera.getIpAddress());
                     }
                     RTSPdata rtspData;
@@ -61,20 +64,46 @@ public class CControl
                         rtspData = rtspDataList.get(camera.getType());
                     } else
                     {
-                        throw new Exception("Storage has no type of camera " + camera.getType());
+                        throw new Exception("HALT! PropertiesFile has no type of camera " + camera.getType());
                     }
 
                     for (int j = 0; j < rtspData.getChannels().size(); j++)
                     {
-                        String rtspAddress = String.format("rtsp://%s:%s@%s:%s%s",
-                                rtspData.getLogin(), rtspData.getPass(),
-                                camera.getIpAddress(), rtspData.port,
-                                rtspData.getChannels().get(j));
-                        saveScreen(
-                                rtspAddress,
-                                screensPath + camera.getName() + "_" + camera.getIpAddress() + "/" +
-                                        rtspData.getChannels().get(j).replace("/","-") + getNowDateTime() + ".png",
-                                mediaPlayer);
+                        String rtspAddress;
+                        String screenNameMask;
+                        if (!rtspData.ispvn)
+                        {
+                            rtspAddress = String.format("rtsp://%s:%s@%s:%s%s",
+                                    rtspData.getLogin(), rtspData.getPass(),
+                                    camera.getIpAddress(), rtspData.port,
+                                    rtspData.getChannels().get(j));
+
+                            // маска имени файла, начиная с папки. Разеделние на папки через /
+                            screenNameMask =
+                                    screensPath +
+                                            "/" + getNowDate() +
+                                            "/" + "DVN-MMS" +
+                                            "/" + camera.getName() + "_IP" + camera.getIpAddress() +
+                                            "/" + "Channel" + (j+1) + ".png";
+                        }
+                        else
+                        {
+                            String channel = rtspData.getChannels().get(j).replace("[PORT]", camera.camPort);
+                            rtspAddress = String.format("rtsp://%s:%s@%s:%s%s",
+                                    rtspData.getLogin(), rtspData.getPass(),
+                                    camera.getIpAddress(), rtspData.port,
+                                    channel);
+
+                            // маска имени файла, начиная с папки. Разеделние на папки через /
+                            screenNameMask =
+                                    screensPath +
+                                            "/" + getNowDate() +
+                                            "/" + "PVN" +
+                                            "/" + "IP" + camera.getIpAddress() +
+                                            "/" + camera.getName() + ".png";
+                        }
+
+                        saveScreen(rtspAddress, screenNameMask, mediaPlayer);
                     }
 
                 }
@@ -89,9 +118,9 @@ public class CControl
         }
     }
 
-    public static String getNowDateTime()
+    public static String getNowDate()
     {
-        return LocalDateTime.now().format(DATE_TIME_FORMATTER).toString();
+        return LocalDate.now().format(DATE_FORMATTER).toString();
     }
 
     public static MediaPlayer initMediaPlayer()
@@ -125,7 +154,7 @@ public class CControl
         {
             e.printStackTrace();
         }
-        System.out.println("Player for stream " + rtspAddress + " closed");
+        System.out.println("HALT! Player for stream " + rtspAddress + " closed");
         return result;
     }
 
@@ -136,19 +165,32 @@ public class CControl
 
         int rowsCount = sheet.getPhysicalNumberOfRows();
 
-        for(int r = 2; r < rowsCount; r++) {
+        boolean nameExists = true;
+        int currentRow = 2;
+        while (nameExists) {
             try {
-                HSSFRow row = sheet.getRow(r);
-                HSSFCell cell = row.getCell(2);
-                HSSFCell cell2 = row.getCell(8);
-                HSSFCell cell3 = row.getCell(7);
+                HSSFRow row = sheet.getRow(currentRow);
+                HSSFCell cell = row.getCell(2); // name
+                if (cell.toString().trim().equals(""))
+                {
+                    nameExists = false;
+                    break;
+                }
+                HSSFCell cell2 = row.getCell(8); // ipAddress
+                HSSFCell cell3 = row.getCell(7); // type
+                HSSFCell cell4 = row.getCell(9); // camPort
 
-                cameraList.add(new Camera(cell.getStringCellValue().trim(), cell2.getStringCellValue().trim(), cell3.getStringCellValue().trim()));
+                cameraList.add(new Camera(cell.getStringCellValue().trim(),
+                        cell2.getStringCellValue().trim(),
+                        cell3.getStringCellValue().trim(),
+                        cell4.getStringCellValue().trim()
+                        ));
+                currentRow++;
             }
             catch (Exception e)
             {
                 e.printStackTrace();
-                System.out.println("Ошибка чтения строки" + r + "из файла Excel");
+                System.out.println("HALT! Error reading row#" + currentRow + "from Excel");
             }
         }
 
