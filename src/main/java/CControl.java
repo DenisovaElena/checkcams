@@ -200,8 +200,10 @@ public class CControl
 
     public static boolean pingHost(String host) {
         try {
-            return InetAddress.getByName(host).isReachable(1000);
-        } catch (IOException e) {
+            Process p1 = java.lang.Runtime.getRuntime().exec("ping -n 1 " + host);
+            int returnVal = p1.waitFor();
+            return  (returnVal==0);
+        } catch (Exception e) {
             return false;
         }
     }
