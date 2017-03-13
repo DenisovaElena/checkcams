@@ -23,14 +23,16 @@ public class Configurator
 
             for (int i = 0; i < count; i++)
             {
+                if (prop.getProperty("type" + i) == null)
+                    continue;
                 rtspDataList.put(prop.getProperty("type" + i),
                         new RTSPdata(
-                        prop.getProperty("type" + i),
-                        prop.getProperty("login" + i),
-                        prop.getProperty("pass" + i),
-                        prop.getProperty("port" + i),
-                        prop.getProperty("codec" + i),
-                        Arrays.asList(prop.getProperty("channels" + i).split(";"))));
+                                prop.getProperty("type" + i),
+                                prop.getProperty("login" + i),
+                                prop.getProperty("pass" + i),
+                                prop.getProperty("port" + i),
+                                prop.getProperty("codec" + i),
+                                Arrays.asList(prop.getProperty("channels" + i).split(";"))));
             }
         }
         catch (Exception e)

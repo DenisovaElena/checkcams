@@ -17,8 +17,11 @@ import uk.co.caprica.vlcj.player.MediaPlayer;
 import uk.co.caprica.vlcj.player.MediaPlayerFactory;
 
 import java.io.*;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +29,9 @@ import java.util.concurrent.TimeUnit;
 
 public class CControl
 {
+    public static final String DATE_TIME_PATTERN = "yyyy-MM-dd_@HH-mm";
+    public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_PATTERN);
+
     public static void main(String[] args)
     {
         try
@@ -44,7 +50,7 @@ public class CControl
                 try
                 {
                     Camera camera = cameraList.get(i);
-                    if (!pingHost(camera.getIpAddress(), 80, 10))
+                    if (!pingHost(camera.getIpAddress()))
                     {
                         throw new Exception("No ping from camera " +
                                 camera.getName() + " with ip " + camera.getIpAddress());
@@ -66,7 +72,8 @@ public class CControl
                                 rtspData.getChannels().get(j));
                         saveScreen(
                                 rtspAddress,
-                                screensPath + camera.getName() + "_" + rtspData.getChannels().get(j) + ".png",
+                                screensPath + camera.getName() + "_" + camera.getIpAddress() + "/" +
+                                        rtspData.getChannels().get(j).replace("/","-") + getNowDateTime() + ".png",
                                 mediaPlayer);
                     }
 
@@ -80,6 +87,11 @@ public class CControl
         catch (Exception e){
             e.printStackTrace();
         }
+    }
+
+    public static String getNowDateTime()
+    {
+        return LocalDateTime.now().format(DATE_TIME_FORMATTER).toString();
     }
 
     public static MediaPlayer initMediaPlayer()
@@ -144,10 +156,9 @@ public class CControl
         return cameraList;
     }
 
-    public static boolean pingHost(String host, int port, int timeout) {
-        try (Socket socket = new Socket()) {
-            socket.connect(new InetSocketAddress(host, port), timeout);
-            return true;
+    public static boolean pingHost(String host) {
+        try {
+            return InetAddress.getByName(host).isReachable(1000);
         } catch (IOException e) {
             return false;
         }
