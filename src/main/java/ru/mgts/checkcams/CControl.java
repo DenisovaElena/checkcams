@@ -127,7 +127,6 @@ public class CControl
     {
         boolean result = false;
         try {
-
             Thread playThread = new Thread()
             {
                 @Override
