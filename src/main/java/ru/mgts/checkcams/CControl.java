@@ -77,7 +77,7 @@ public class CControl
                                             "/" + getNowDate() +
                                             "/" + "DVN-MMS" +
                                             "/" + camera.getName() + "_IP" + camera.getIpAddress() +
-                                            "/" + "Channel" + (j+1) + ".png";
+                                            "/" + camera.getIpAddress() + ".png";
                         }
                         else
                         {
@@ -123,7 +123,7 @@ public class CControl
         return factory.newEmbeddedMediaPlayer();
     }
 
-    public static boolean saveScreen(final String rtspAddress, String savePath, final MediaPlayer mediaPlayer)
+    public static boolean saveScreen(final String rtspAddress, final String savePath, final MediaPlayer mediaPlayer)
     {
         boolean result = false;
         try {
@@ -140,7 +140,8 @@ public class CControl
             File file = new File(savePath);
             mediaPlayer.saveSnapshot(file);
             mediaPlayer.stop();
-            playThread.interrupt();
+            //playThread.interrupt();
+            playThread.join();
             result = true;
         }
         catch (Exception e)
@@ -148,6 +149,9 @@ public class CControl
             e.printStackTrace();
         }
         System.out.println("HALT! Player for stream " + rtspAddress + " closed");
+        if(!(new File(savePath).exists())) {
+            result = saveScreen(rtspAddress, savePath, mediaPlayer);
+        }
         return result;
     }
 
@@ -163,12 +167,12 @@ public class CControl
         while (nameExists) {
             try {
                 HSSFRow row = sheet.getRow(currentRow);
-                HSSFCell cell = row.getCell(2); // name
-                if (cell.toString().trim().equals(""))
+                if (row == null || sheet.getRow(currentRow).toString().trim().equals(""))
                 {
                     nameExists = false;
                     break;
                 }
+                HSSFCell cell = row.getCell(2); // name
                 HSSFCell cell2 = row.getCell(8); // ipAddress
                 HSSFCell cell3 = row.getCell(7); // type
                 HSSFCell cell4 = row.getCell(9); // camPort
