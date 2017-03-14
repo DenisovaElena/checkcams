@@ -136,8 +136,16 @@ public class CControl
                     e.printStackTrace();
                 }
                 finally {
-                    try (FileOutputStream outputStream = new FileOutputStream(destinationFile)) {
-                        myExcelBook.write(outputStream);
+                    boolean writed = true;
+                    while (writed) {
+                        try (FileOutputStream outputStream = new FileOutputStream(destinationFile)) {
+                            myExcelBook.write(outputStream);
+                            writed = false;
+                        }
+                        catch (IOException e)
+                        {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }
@@ -155,7 +163,7 @@ public class CControl
 
     public static MediaPlayer initMediaPlayer()
     {
-        NativeLibrary.addSearchPath("libvlc", "C:\\vlc");
+        NativeLibrary.addSearchPath("libvlc", "C:\\vlc64");
         MediaPlayerFactory factory = new MediaPlayerFactory();
         return factory.newEmbeddedMediaPlayer();
     }
