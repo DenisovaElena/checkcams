@@ -3,10 +3,9 @@ package ru.mgts.checkcams; /**
  */
 
 import com.sun.jna.NativeLibrary;
-import org.apache.poi.hssf.usermodel.HSSFCell;
-import org.apache.poi.hssf.usermodel.HSSFRow;
-import org.apache.poi.hssf.usermodel.HSSFSheet;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.hssf.usermodel.*;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.IndexedColors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.co.caprica.vlcj.player.MediaPlayer;
@@ -40,12 +39,52 @@ public class CControl
             // инициализируем хэш-карту - классификатор типов камер. Ключ - тип камеры, значение - структура ru.mgts.checkcams.RTSPdata
             Map<String, RTSPdata> rtspDataList = Configurator.loadConfigs();
             // инициализируем массив камер из экселя
-            List<Camera> cameraList = readFromExcel("C:\\camertest.xls");
-            for (int i = 0; i < cameraList.size(); i++)
-            {
+            //List<Camera> cameraList = readFromExcel("C:\\camertest.xls");
+            String sourceFile = "C:\\camertest.xls";
+            String destinationFile = "C:\\resultStatusCams.xls";
+            HSSFWorkbook myExcelBook = new HSSFWorkbook(new FileInputStream(sourceFile));
+
+            CellStyle styleOnlineScreen = myExcelBook.createCellStyle();
+            styleOnlineScreen.setFillForegroundColor(IndexedColors.GREEN.getIndex());
+            styleOnlineScreen.setFillPattern(CellStyle.SOLID_FOREGROUND);
+
+            CellStyle styleOnline = myExcelBook.createCellStyle();
+            styleOnline.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
+            styleOnlineScreen.setFillPattern(CellStyle.SOLID_FOREGROUND);
+
+            CellStyle styleOffline = myExcelBook.createCellStyle();
+            styleOffline.setFillForegroundColor(IndexedColors.RED.getIndex());
+            styleOnlineScreen.setFillPattern(CellStyle.SOLID_FOREGROUND);
+
+            HSSFSheet sheet = myExcelBook.getSheetAt(0);
+            boolean nameExists = true;
+            int currentRow = 2;
+            while (nameExists) {
                 try
                 {
-                    Camera camera = cameraList.get(i);
+                    HSSFRow row = sheet.getRow(currentRow);
+                    if (row == null || sheet.getRow(currentRow).getCell(7).toString().trim().equals(""))
+                    {
+                        nameExists = false;
+                        break;
+                    }
+                    HSSFCell cellName = row.getCell(2); // name
+                    HSSFCell cellIpAddress = row.getCell(8); // ipAddress
+                    HSSFCell cellType = row.getCell(7); // type
+                    HSSFCell cellCamPort = row.getCell(9); // camPort
+                    HSSFCell cellNetStatus = row.getCell(13); // netStatus
+
+                    currentRow++;
+                    Camera camera = new Camera(cellName.getStringCellValue().trim(),
+                            cellIpAddress.getStringCellValue().trim(),
+                            cellType.getStringCellValue().trim(),
+                            cellCamPort.getStringCellValue().trim()
+                    );
+
+
+                    cellNetStatus.setCellValue(Status.OFFLINE.toString());
+                    cellNetStatus.setCellStyle(styleOffline);
+
                     if (!pingHost(camera.getIpAddress()))
                     {
                         throw new Exception("HALT! No ping from camera " +
@@ -96,7 +135,16 @@ public class CControl
                                             "/" + camera.getName() + ".png";
                         }
 
-                        saveScreen(rtspAddress, screenNameMask, mediaPlayer);
+                        Status status = saveScreen(rtspAddress, screenNameMask, mediaPlayer, 5);
+                        if (status == Status.WORKS_SCREEN) {
+                            cellNetStatus.setCellValue(status.toString());
+                            cellNetStatus.setCellStyle(styleOnlineScreen);
+                        }
+                        else
+                        {
+                            cellNetStatus.setCellValue(status.toString());
+                            cellNetStatus.setCellStyle(styleOnline);
+                        }
                     }
 
                 }
@@ -105,6 +153,10 @@ public class CControl
                     e.printStackTrace();
                 }
             }
+            try (FileOutputStream outputStream = new FileOutputStream(destinationFile)) {
+                myExcelBook.write(outputStream);
+            }
+            myExcelBook.close();
         }
         catch (Exception e){
             e.printStackTrace();
@@ -118,14 +170,13 @@ public class CControl
 
     public static MediaPlayer initMediaPlayer()
     {
-        NativeLibrary.addSearchPath("libvlc", "C:\\vlc");
+        NativeLibrary.addSearchPath("libvlc", "C:\\vlc64");
         MediaPlayerFactory factory = new MediaPlayerFactory();
         return factory.newEmbeddedMediaPlayer();
     }
 
-    public static boolean saveScreen(final String rtspAddress, final String savePath, final MediaPlayer mediaPlayer)
+    public static Status saveScreen(final String rtspAddress, final String savePath, final MediaPlayer mediaPlayer, int repeatsCount)
     {
-        boolean result = false;
         try {
             Thread playThread = new Thread()
             {
@@ -141,25 +192,23 @@ public class CControl
             mediaPlayer.stop();
             //playThread.interrupt();
             playThread.join();
-            result = true;
         }
         catch (Exception e)
         {
             e.printStackTrace();
         }
         System.out.println("HALT! Player for stream " + rtspAddress + " closed");
-        if(!(new File(savePath).exists())) {
-            result = saveScreen(rtspAddress, savePath, mediaPlayer);
+        if(!(new File(savePath).exists()) && repeatsCount > 0) {
+            repeatsCount--;
+            saveScreen(rtspAddress, savePath, mediaPlayer, repeatsCount);
         }
-        return result;
+        return (new File(savePath).exists()) ? Status.WORKS_SCREEN : Status.WORKS;
     }
 
     public static List<Camera> readFromExcel(String file) throws IOException {
         List<Camera> cameraList = new ArrayList<Camera>();
         HSSFWorkbook myExcelBook = new HSSFWorkbook(new FileInputStream(file));
         HSSFSheet sheet = myExcelBook.getSheetAt(0);
-
-        int rowsCount = sheet.getPhysicalNumberOfRows();
 
         boolean nameExists = true;
         int currentRow = 2;
