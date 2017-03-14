@@ -47,7 +47,7 @@ public class CControl
                 try
                 {
                     HSSFRow row = sheet.getRow(currentRow);
-                    if (row == null || sheet.getRow(currentRow).getCell(7).toString().trim().equals(""))
+                    if (row == null || row.getCell(7) == null || row.getCell(7).toString().trim().equals(""))
                     {
                         nameExists = false;
                         break;
