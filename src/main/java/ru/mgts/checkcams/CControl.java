@@ -163,7 +163,7 @@ public class CControl
 
     public static MediaPlayer initMediaPlayer()
     {
-        NativeLibrary.addSearchPath("libvlc", "C:\\vlc64");
+        NativeLibrary.addSearchPath("libvlc", "C:\\vlc");
         MediaPlayerFactory factory = new MediaPlayerFactory();
         return factory.newEmbeddedMediaPlayer();
     }
