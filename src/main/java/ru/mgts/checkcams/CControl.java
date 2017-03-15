@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.co.caprica.vlcj.player.MediaPlayer;
 import uk.co.caprica.vlcj.player.MediaPlayerFactory;
+import uk.co.caprica.vlcj.runtime.RuntimeUtil;
 
 import java.io.*;
 import java.time.LocalDate;
@@ -30,7 +31,7 @@ public class CControl
 
             //saveScreen("rtsp://admin:admin@10.209.246.42:554/channel1", "C:\\screens\\test.png", mediaPlayer);
             //saveScreen("file:///C:\\Szamar Madar.avi", "C:\\screens\\test.png", mediaPlayer);
-            //saveScreen("rtsp://localhost:5544/pusya", "C:\\screens\\test.png", mediaPlayer);
+            //saveScreen("rtsp://localhost:5544/pusya", "C:\\screens\\test.png", mediaPlayer, 3);
 
             String screensPath = "C:\\screens\\";
             // инициализируем хэш-карту - классификатор типов камер. Ключ - тип камеры, значение - структура ru.mgts.checkcams.RTSPdata
@@ -114,7 +115,7 @@ public class CControl
                 }
                 catch (Exception e)
                 {
-                    e.printStackTrace();
+                    LOG.debug(e.getMessage());
                 }
                 finally {
                     if (!nameExists) {
@@ -158,7 +159,8 @@ public class CControl
 
     public static MediaPlayer initMediaPlayer()
     {
-        NativeLibrary.addSearchPath("libvlc", "C:\\vlc");
+        NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(), "C:\\vlc64");
+        //System.setProperty("VLC_PLUGIN_PATH", "C:\\Program Files\\VideoLAN\\VLC\\plugins");
         MediaPlayerFactory factory = new MediaPlayerFactory();
         return factory.newEmbeddedMediaPlayer();
     }
@@ -166,6 +168,7 @@ public class CControl
     public static boolean saveScreen(final String rtspAddress, final String savePath, final MediaPlayer mediaPlayer, int repeatsCount)
     {
         try {
+            LOG.debug("ACHTUNG! Starting vlc for stream " + rtspAddress);
             Thread playThread = new Thread()
             {
                 @Override
@@ -185,9 +188,9 @@ public class CControl
         {
             e.printStackTrace();
         }
-        System.out.println("ACHTUNG! Player for stream " + rtspAddress + " closed");
-        if(!(new File(savePath).exists()) && repeatsCount > 0) {
-            repeatsCount--;
+        LOG.debug("ACHTUNG! Player for stream " + rtspAddress + " closed");
+        if(!(new File(savePath).exists()) && repeatsCount-- > 0) {
+            LOG.debug("ACHTUNG! Not available screen for stream " + rtspAddress + ". Trying again, elapsed repeats: " + repeatsCount);
             saveScreen(rtspAddress, savePath, mediaPlayer, repeatsCount);
         }
         return (new File(savePath).exists());
