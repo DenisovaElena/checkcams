@@ -1,4 +1,4 @@
-package ru.mgts.checkcams;
+package ru.mgts.checkcams.model;
 
 import java.util.List;
 
@@ -7,13 +7,13 @@ import java.util.List;
  */
 public class RTSPdata
 {
-    String type;
-    String login;
-    String pass;
-    String port;
-    String codec;
-    Boolean ispvn;
-    String channel;
+    private String type;
+    private String login;
+    private String pass;
+    private String port;
+    private String codec;
+    private boolean pvn;
+    private String channel;
 
     public RTSPdata(String type, String login, String pass, String port, String codec, Boolean ispvn, String channel)
     {
@@ -22,7 +22,7 @@ public class RTSPdata
         this.pass = pass;
         this.port = port;
         this.codec = codec;
-        this.ispvn = ispvn;
+        this.pvn = ispvn;
         this.channel = channel;
     }
 
@@ -51,9 +51,8 @@ public class RTSPdata
         return codec;
     }
 
-    public Boolean getIspvn()
-    {
-        return ispvn;
+    public boolean isPvn() {
+        return pvn;
     }
 
     public String getChannel() {

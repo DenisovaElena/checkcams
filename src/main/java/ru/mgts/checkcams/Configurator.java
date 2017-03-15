@@ -1,5 +1,7 @@
 package ru.mgts.checkcams;
 
+import ru.mgts.checkcams.model.RTSPdata;
+
 import java.util.*;
 
 /**
