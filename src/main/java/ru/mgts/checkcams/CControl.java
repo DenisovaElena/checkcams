@@ -165,7 +165,6 @@ public class CControl
 
     public static boolean saveScreen(final String rtspAddress, final String savePath, final MediaPlayer mediaPlayer, int repeatsCount)
     {
-        boolean result = false;
         try {
             Thread playThread = new Thread()
             {
@@ -191,11 +190,7 @@ public class CControl
             repeatsCount--;
             saveScreen(rtspAddress, savePath, mediaPlayer, repeatsCount);
         }
-        else
-        {
-            result = true;
-        }
-        return result;
+        return (new File(savePath).exists());
     }
 
     public static boolean pingHost(String host) {
