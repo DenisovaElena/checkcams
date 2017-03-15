@@ -110,7 +110,7 @@ public class CControl
                                         "/" + camera.getName() + ".png";
                     }
 
-                    camStatus = saveScreen(rtspAddress, screenNameMask, mediaPlayer, 2);
+                    camStatus = saveScreen(rtspAddress, screenNameMask, mediaPlayer, 5);
                 }
                 catch (Exception e)
                 {
