@@ -44,7 +44,7 @@ public class MainForm extends JFrame{
         textEndTime.setText("17:00");
 
         pack();
-        setTitle("Опрос статуов камер");
+        setTitle("Опрос камер");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 400);
         setLocationRelativeTo(null);
