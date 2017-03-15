@@ -44,11 +44,9 @@ public class CControl
             boolean nameExists = true;
             int currentRow = 2;
             while (nameExists) {
-                try
-                {
+                try {
                     HSSFRow row = sheet.getRow(currentRow);
-                    if (row == null || row.getCell(7) == null || row.getCell(7).toString().trim().equals(""))
-                    {
+                    if (row == null || row.getCell(7) == null || row.getCell(7).toString().trim().equals("")) {
                         nameExists = false;
                         break;
                     }
@@ -69,65 +67,56 @@ public class CControl
                     cellNetStatus.setCellValue(Status.OFFLINE.toString());
                     cellNetStatus.getCellStyle().setFillForegroundColor(HSSFColor.RED.index);
 
-                    if (!pingHost(camera.getIpAddress()))
-                    {
+                    if (!pingHost(camera.getIpAddress())) {
                         throw new Exception("HALT! No ping from camera " +
                                 camera.getName() + " with ip " + camera.getIpAddress());
                     }
                     RTSPdata rtspData;
-                    if (rtspDataList.containsKey(camera.getType()))
-                    {
+                    if (rtspDataList.containsKey(camera.getType())) {
                         rtspData = rtspDataList.get(camera.getType());
-                    } else
-                    {
+                    } else {
                         throw new Exception("HALT! PropertiesFile has no type of camera " + camera.getType());
                     }
 
-                    for (int j = 0; j < rtspData.getChannels().size(); j++)
-                    {
-                        String rtspAddress;
-                        String screenNameMask;
-                        if (!rtspData.ispvn)
-                        {
-                            rtspAddress = String.format("rtsp://%s:%s@%s:%s%s",
-                                    rtspData.getLogin(), rtspData.getPass(),
-                                    camera.getIpAddress(), rtspData.port,
-                                    rtspData.getChannels().get(j));
+                    String rtspAddress;
+                    String screenNameMask;
+                    if (!rtspData.ispvn) {
+                        rtspAddress = String.format("rtsp://%s:%s@%s:%s%s",
+                                rtspData.getLogin(), rtspData.getPass(),
+                                camera.getIpAddress(), rtspData.port,
+                                rtspData.getChannel());
 
-                            // маска имени файла, начиная с папки. Разеделние на папки через /
-                            screenNameMask =
-                                    screensPath +
-                                            "/" + getNowDate() +
-                                            "/" + "DVN-MMS" +
-                                            "/" + camera.getName() + "_IP" + camera.getIpAddress() + ".png";
-                        }
-                        else
-                        {
-                            String channel = rtspData.getChannels().get(j).replace("[PORT]", camera.camPort);
-                            rtspAddress = String.format("rtsp://%s:%s@%s:%s%s",
-                                    rtspData.getLogin(), rtspData.getPass(),
-                                    camera.getIpAddress(), rtspData.port,
-                                    channel);
+                        // маска имени файла, начиная с папки. Разеделние на папки через /
+                        screenNameMask =
+                                screensPath +
+                                        "/" + getNowDate() +
+                                        "/" + "DVN-MMS" +
+                                        "/" + camera.getName() + "_IP" + camera.getIpAddress() + ".png";
+                    } else {
+                        String channel = camera.camPort.equals("1") ?
+                                rtspData.getChannel().replace("[PORT]", "") :
+                                rtspData.getChannel().replace("[PORT]", camera.camPort);
+                        rtspAddress = String.format("rtsp://%s:%s@%s:%s%s",
+                                rtspData.getLogin(), rtspData.getPass(),
+                                camera.getIpAddress(), rtspData.port,
+                                channel);
 
-                            // маска имени файла, начиная с папки. Разеделние на папки через /
-                            screenNameMask =
-                                    screensPath +
-                                            "/" + getNowDate() +
-                                            "/" + "PVN" +
-                                            "/" + "IP" + camera.getIpAddress() +
-                                            "/" + camera.getName() + ".png";
-                        }
+                        // маска имени файла, начиная с папки. Разеделние на папки через /
+                        screenNameMask =
+                                screensPath +
+                                        "/" + getNowDate() +
+                                        "/" + "PVN" +
+                                        "/" + "IP" + camera.getIpAddress() +
+                                        "/" + camera.getName() + ".png";
+                    }
 
-                        Status status = saveScreen(rtspAddress, screenNameMask, mediaPlayer, 2);
-                        if (status == Status.WORKS_SCREEN) {
-                            cellNetStatus.setCellValue(status.toString());
-                            cellNetStatus.getCellStyle().setFillForegroundColor(HSSFColor.GREEN.index);
-                        }
-                        else
-                        {
-                            cellNetStatus.setCellValue(status.toString());
-                            cellNetStatus.getCellStyle().setFillForegroundColor(HSSFColor.YELLOW.index);
-                        }
+                    Status status = saveScreen(rtspAddress, screenNameMask, mediaPlayer, 2);
+                    if (status == Status.WORKS_SCREEN) {
+                        cellNetStatus.setCellValue(status.toString());
+                        cellNetStatus.getCellStyle().setFillForegroundColor(HSSFColor.GREEN.index);
+                    } else {
+                        cellNetStatus.setCellValue(status.toString());
+                        cellNetStatus.getCellStyle().setFillForegroundColor(HSSFColor.YELLOW.index);
                     }
                 }
                 catch (Exception e)
