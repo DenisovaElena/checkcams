@@ -175,7 +175,7 @@ public class CControl
                 }
             };
             playThread.start();
-            Thread.sleep(15000);
+            Thread.sleep(20000);
             File file = new File(savePath);
             mediaPlayer.saveSnapshot(file);
             mediaPlayer.stop();
