@@ -99,8 +99,7 @@ public class CControl
                                     screensPath +
                                             "/" + getNowDate() +
                                             "/" + "DVN-MMS" +
-                                            "/" + camera.getName() + "_IP" + camera.getIpAddress() +
-                                            "/" + camera.getIpAddress() + ".png";
+                                            "/" + camera.getName() + "_IP" + camera.getIpAddress() + ".png";
                         }
                         else
                         {
@@ -119,7 +118,7 @@ public class CControl
                                             "/" + camera.getName() + ".png";
                         }
 
-                        Status status = saveScreen(rtspAddress, screenNameMask, mediaPlayer, 5);
+                        Status status = saveScreen(rtspAddress, screenNameMask, mediaPlayer, 2);
                         if (status == Status.WORKS_SCREEN) {
                             cellNetStatus.setCellValue(status.toString());
                             cellNetStatus.getCellStyle().setFillForegroundColor(HSSFColor.GREEN.index);
@@ -171,6 +170,7 @@ public class CControl
     public static Status saveScreen(final String rtspAddress, final String savePath, final MediaPlayer mediaPlayer, int repeatsCount)
     {
         try {
+            System.out.println("HALT! Starting capture video stream. Elapsed repeats: " + repeatsCount);
             Thread playThread = new Thread()
             {
                 @Override
