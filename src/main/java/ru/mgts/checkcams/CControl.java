@@ -68,14 +68,14 @@ public class CControl
                     );
 
                     if (!pingHost(camera.getIpAddress())) {
-                        throw new Exception("HALT! No ping from camera " +
+                        throw new Exception("ACHTUNG! No ping from camera " +
                                 camera.getName() + " with ip " + camera.getIpAddress());
                     }
                     RTSPdata rtspData;
                     if (rtspDataList.containsKey(camera.getType())) {
                         rtspData = rtspDataList.get(camera.getType());
                     } else {
-                        throw new Exception("HALT! PropertiesFile has no type of camera " + camera.getType());
+                        throw new Exception("ACHTUNG! PropertiesFile has no type of camera " + camera.getType());
                     }
 
                     String rtspAddress;
@@ -185,7 +185,7 @@ public class CControl
         {
             e.printStackTrace();
         }
-        System.out.println("HALT! Player for stream " + rtspAddress + " closed");
+        System.out.println("ACHTUNG! Player for stream " + rtspAddress + " closed");
         if(!(new File(savePath).exists()) && repeatsCount > 0) {
             repeatsCount--;
             saveScreen(rtspAddress, savePath, mediaPlayer, repeatsCount);
