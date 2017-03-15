@@ -148,6 +148,7 @@ public class CControl
         catch (Exception e){
             e.printStackTrace();
         }
+        System.exit(0);
     }
 
     public static String getNowDate()
