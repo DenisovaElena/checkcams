@@ -41,9 +41,13 @@ public class CControl
 
             HSSFWorkbook myExcelBook = new HSSFWorkbook(new FileInputStream(sourceFile));
             HSSFSheet sheet = myExcelBook.getSheetAt(0);
+            int statusCellNumber = 51;
+            sheet.getRow(1).createCell(statusCellNumber).setCellValue("Cтатус");
             boolean nameExists = true;
             int currentRow = 2;
             while (nameExists) {
+                boolean camStatus = false;
+                HSSFCell cellNetStatus = null;
                 try {
                     HSSFRow row = sheet.getRow(currentRow);
                     if (row == null || row.getCell(7) == null || row.getCell(7).toString().trim().equals("")) {
@@ -54,7 +58,7 @@ public class CControl
                     HSSFCell cellIpAddress = row.getCell(8); // ipAddress
                     HSSFCell cellType = row.getCell(7); // type
                     HSSFCell cellCamPort = row.getCell(9); // camPort
-                    HSSFCell cellNetStatus = row.getCell(13); // netStatus
+                    cellNetStatus = row.createCell(statusCellNumber); // netStatus
 
                     currentRow++;
                     Camera camera = new Camera(cellName.getStringCellValue().trim(),
@@ -62,10 +66,6 @@ public class CControl
                             cellType.getStringCellValue().trim(),
                             cellCamPort.getStringCellValue().trim()
                     );
-
-
-                    cellNetStatus.setCellValue(Status.OFFLINE.toString());
-                    cellNetStatus.getCellStyle().setFillForegroundColor(HSSFColor.RED.index);
 
                     if (!pingHost(camera.getIpAddress())) {
                         throw new Exception("HALT! No ping from camera " +
@@ -110,20 +110,26 @@ public class CControl
                                         "/" + camera.getName() + ".png";
                     }
 
-                    Status status = saveScreen(rtspAddress, screenNameMask, mediaPlayer, 2);
-                    if (status == Status.WORKS_SCREEN) {
-                        cellNetStatus.setCellValue(status.toString());
-                        cellNetStatus.getCellStyle().setFillForegroundColor(HSSFColor.GREEN.index);
-                    } else {
-                        cellNetStatus.setCellValue(status.toString());
-                        cellNetStatus.getCellStyle().setFillForegroundColor(HSSFColor.YELLOW.index);
-                    }
+                    camStatus = saveScreen(rtspAddress, screenNameMask, mediaPlayer, 2);
                 }
                 catch (Exception e)
                 {
                     e.printStackTrace();
                 }
                 finally {
+                    if (!nameExists) {
+                        break;
+                    }
+                    if (camStatus)
+                    {
+                        cellNetStatus.setCellValue("Да");
+                        cellNetStatus.getCellStyle().setFillForegroundColor(HSSFColor.GREEN.index);
+                    }
+                    else
+                    {
+                        cellNetStatus.setCellValue("Нет");
+                        cellNetStatus.getCellStyle().setFillForegroundColor(HSSFColor.RED.index);
+                    }
                     boolean writed = true;
                     while (writed) {
                         try (FileOutputStream outputStream = new FileOutputStream(destinationFile)) {
@@ -156,10 +162,10 @@ public class CControl
         return factory.newEmbeddedMediaPlayer();
     }
 
-    public static Status saveScreen(final String rtspAddress, final String savePath, final MediaPlayer mediaPlayer, int repeatsCount)
+    public static boolean saveScreen(final String rtspAddress, final String savePath, final MediaPlayer mediaPlayer, int repeatsCount)
     {
+        boolean result = false;
         try {
-            System.out.println("HALT! Starting capture video stream. Elapsed repeats: " + repeatsCount);
             Thread playThread = new Thread()
             {
                 @Override
@@ -168,7 +174,7 @@ public class CControl
                 }
             };
             playThread.start();
-            Thread.sleep(30000);
+            Thread.sleep(15000);
             File file = new File(savePath);
             mediaPlayer.saveSnapshot(file);
             mediaPlayer.stop();
@@ -184,7 +190,11 @@ public class CControl
             repeatsCount--;
             saveScreen(rtspAddress, savePath, mediaPlayer, repeatsCount);
         }
-        return (new File(savePath).exists()) ? Status.WORKS_SCREEN : Status.WORKS;
+        else
+        {
+            result = true;
+        }
+        return result;
     }
 
     public static boolean pingHost(String host) {
