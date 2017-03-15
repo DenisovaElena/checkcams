@@ -42,7 +42,7 @@ public class CControl
             HSSFWorkbook myExcelBook = new HSSFWorkbook(new FileInputStream(sourceFile));
             HSSFSheet sheet = myExcelBook.getSheetAt(0);
             int statusCellNumber = 51;
-            sheet.getRow(1).createCell(statusCellNumber).setCellValue("Cтатус");
+            sheet.getRow(1).createCell(statusCellNumber).setCellValue("Скрин");
             boolean nameExists = true;
             int currentRow = 2;
             while (nameExists) {
