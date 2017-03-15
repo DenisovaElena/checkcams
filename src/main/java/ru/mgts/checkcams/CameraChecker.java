@@ -50,6 +50,7 @@ public class CameraChecker {
         try
         {
             complete = false;
+            camsTestedCount = 0;
             MediaPlayer mediaPlayer = initMediaPlayer();
 
             //saveScreen("rtsp://admin:admin@10.209.246.42:554/channel1", "C:\\screens\\test.png", mediaPlayer);
