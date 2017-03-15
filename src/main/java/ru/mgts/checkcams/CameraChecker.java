@@ -141,7 +141,7 @@ public class CameraChecker {
                 }
                 catch (Exception e)
                 {
-                    LOG.debug(e.getMessage());
+                    LOG.info(e.getMessage());
                 }
                 finally {
                     if (!nameExists) {
@@ -169,7 +169,7 @@ public class CameraChecker {
                         }
                         catch (IOException e)
                         {
-                            e.printStackTrace();
+                            LOG.info(e.getMessage());
                         }
                     }
                 }
@@ -177,7 +177,7 @@ public class CameraChecker {
             myExcelBook.close();
         }
         catch (Exception e){
-            e.printStackTrace();
+            LOG.info(e.getMessage());
         }
         complete = true;
     }
