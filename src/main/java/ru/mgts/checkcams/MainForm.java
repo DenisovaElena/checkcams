@@ -47,6 +47,7 @@ public class MainForm extends JFrame{
         setTitle("Опрос камер");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 400);
+        setResizable(false);
         setLocationRelativeTo(null);
         setVisible(true);
 
