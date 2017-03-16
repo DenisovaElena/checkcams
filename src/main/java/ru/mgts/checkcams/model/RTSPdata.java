@@ -13,9 +13,10 @@ public class RTSPdata
     private String port;
     private String codec;
     private boolean pvn;
+    private String foldername;
     private String channel;
 
-    public RTSPdata(String type, String login, String pass, String port, String codec, Boolean ispvn, String channel)
+    public RTSPdata(String type, String login, String pass, String port, String codec, Boolean ispvn, String foldername, String channel)
     {
         this.type = type;
         this.login = login;
@@ -23,6 +24,7 @@ public class RTSPdata
         this.port = port;
         this.codec = codec;
         this.pvn = ispvn;
+        this.foldername = foldername;
         this.channel = channel;
     }
 
@@ -53,6 +55,10 @@ public class RTSPdata
 
     public boolean isPvn() {
         return pvn;
+    }
+
+    public String getFoldername() {
+        return foldername;
     }
 
     public String getChannel() {

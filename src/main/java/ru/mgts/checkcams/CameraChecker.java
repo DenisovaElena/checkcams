@@ -22,6 +22,9 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * Created by MakhrovSS on 15.03.2017.
@@ -30,6 +33,8 @@ public class CameraChecker {
 
     private boolean complete;
     private int camsTestedCount;
+    private ExecutorService serviceMediaPlayer = Executors.newFixedThreadPool(1);
+    private ExecutorService serviceCamsTest = Executors.newFixedThreadPool(10);
 
     protected static final Logger LOG = LoggerFactory.getLogger(CControl.class);
 
@@ -60,8 +65,6 @@ public class CameraChecker {
             // инициализируем хэш-карту - классификатор типов камер. Ключ - тип камеры, значение - структура ru.mgts.checkcams.model.RTSPdata
             Map<String, RTSPdata> rtspDataList = Configurator.loadConfigs();
 
-            String destinationFile = "C:\\resultStatusCams.xls";
-
             HSSFWorkbook myExcelBook = new HSSFWorkbook(new FileInputStream(sourcePath));
             HSSFSheet sheet = myExcelBook.getSheetAt(0);
             int statusCellNumber = 51;
@@ -69,10 +72,10 @@ public class CameraChecker {
             boolean nameExists = true;
             int currentRow = 2;
             while (nameExists && !isComplete()) {
-                //while (LocalTime.now().isBefore(startTime) && LocalTime.now().isAfter(endTime))
-                //{
-                //    Thread.sleep(1000);
-                //}
+                while (LocalTime.now().isBefore(startTime) || LocalTime.now().isAfter(endTime))
+                {
+                   Thread.sleep(1000);
+                }
                 boolean camStatus = false;
                 HSSFCell cellNetStatus = null;
                 try {
@@ -117,7 +120,7 @@ public class CameraChecker {
                         screenNameMask =
                                 screensPath +
                                         "/" + getNowDate() +
-                                        "/" + "DVN-MMS" +
+                                        "/" + rtspData.getFoldername() +
                                         "/" + camera.getName() + "_IP" + camera.getIpAddress() + ".png";
                     } else {
                         String channel = camera.getCamPort().equals("1") ?
@@ -132,7 +135,7 @@ public class CameraChecker {
                         screenNameMask =
                                 screensPath +
                                         "/" + getNowDate() +
-                                        "/" + "PVN" +
+                                        "/" + rtspData.getFoldername() +
                                         "/" + "IP" + camera.getIpAddress() +
                                         "/" + camera.getName() + ".png";
                     }
@@ -198,20 +201,17 @@ public class CameraChecker {
     {
         try {
             LOG.debug("ACHTUNG! Starting vlc for stream " + rtspAddress);
-            Thread playThread = new Thread()
-            {
-                @Override
-                public void run() {
-                    mediaPlayer.playMedia(rtspAddress);
-                }
-            };
-            playThread.start();
-            Thread.sleep(50000);
+
+            Runnable taskPlay = () -> { mediaPlayer.playMedia(rtspAddress); };
+            Future task = serviceMediaPlayer.submit(taskPlay);
+            Thread.sleep(20000);
             File file = new File(savePath);
             mediaPlayer.saveSnapshot(file);
             mediaPlayer.stop();
-            //playThread.interrupt();
-            playThread.join();
+            while (!task.isDone())
+            {
+                Thread.sleep(1);
+            }
         }
         catch (Exception e)
         {

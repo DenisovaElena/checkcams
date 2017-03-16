@@ -37,6 +37,7 @@ public class Configurator
                                 prop.getProperty("port" + i),
                                 prop.getProperty("codec" + i),
                                 Boolean.parseBoolean(prop.getProperty("ispvn" + i)),
+                                prop.getProperty("codec" + i),
                                 prop.getProperty("channel" + i)
                                 ));
             }
