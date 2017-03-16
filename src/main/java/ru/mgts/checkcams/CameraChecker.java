@@ -1,6 +1,6 @@
 package ru.mgts.checkcams;
 
-import com.sun.jna.NativeLibrary;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -8,74 +8,61 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.mgts.checkcams.model.CamStatus;
 import ru.mgts.checkcams.model.Camera;
 import ru.mgts.checkcams.model.RTSPdata;
-import ru.mgts.checkcams.util.DateTimeUtil;
-import uk.co.caprica.vlcj.player.MediaPlayer;
-import uk.co.caprica.vlcj.player.MediaPlayerFactory;
-import uk.co.caprica.vlcj.runtime.RuntimeUtil;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 /**
  * Created by MakhrovSS on 15.03.2017.
  */
 public class CameraChecker {
 
-    private boolean complete;
-    private int camsTestedCount;
-    private ExecutorService serviceMediaPlayer = Executors.newFixedThreadPool(1);
-    private ExecutorService serviceCamsTest = Executors.newFixedThreadPool(10);
-
     protected static final Logger LOG = LoggerFactory.getLogger(CControl.class);
 
-    public boolean isComplete() {
-        return complete;
-    }
+    private boolean complete;
+    private int camsTestedCount;
 
-    public void setComplete(boolean complete) {
-        this.complete = complete;
-    }
+    private static ThreadFactory threadFactoryMediaPlayers = new ThreadFactoryBuilder()
+            .setNameFormat("mediaPlayers-%d")
+            .build();
+    protected static ExecutorService serviceMediaPlayer = Executors.newFixedThreadPool(1, threadFactoryMediaPlayers);
 
-    public int getCamsTestedCount() {
-        return camsTestedCount;
-    }
+    private static ThreadFactory threadFactoryCamsTest = new ThreadFactoryBuilder()
+            .setNameFormat("camsTest-%d")
+            .build();
+    private ExecutorService serviceCamsTest = Executors.newFixedThreadPool(10, threadFactoryCamsTest);
 
-    public void startCameraIterator(String sourcePath, String destinationPath, String screensPath, LocalTime startTime, LocalTime endTime)
-    {
-        try
-        {
-            complete = false;
-            camsTestedCount = 0;
-            MediaPlayer mediaPlayer = initMediaPlayer();
+    public static Map<String, RTSPdata> rtspDataList = Configurator.loadConfigs();
 
+
+    public void startCameraIterator(String sourcePath, String destinationPath, String screensPath, LocalTime startTime, LocalTime endTime) {
+        try {
             //saveScreen("rtsp://admin:admin@10.209.246.42:554/channel1", "C:\\screens\\test.png", mediaPlayer);
             //saveScreen("file:///C:\\Szamar Madar.avi", "C:\\screens\\test.png", mediaPlayer);
             //saveScreen("rtsp://localhost:5544/pusya", "C:\\screens\\test.png", mediaPlayer, 3);
 
             // инициализируем хэш-карту - классификатор типов камер. Ключ - тип камеры, значение - структура ru.mgts.checkcams.model.RTSPdata
-            Map<String, RTSPdata> rtspDataList = Configurator.loadConfigs();
 
+            complete = false;
+            camsTestedCount = 0;
             HSSFWorkbook myExcelBook = new HSSFWorkbook(new FileInputStream(sourcePath));
             HSSFSheet sheet = myExcelBook.getSheetAt(0);
             int statusCellNumber = 51;
             sheet.getRow(1).createCell(statusCellNumber).setCellValue("Скрин");
             boolean nameExists = true;
             int currentRow = 2;
+            List<CamStatus> resultList = new ArrayList<>();
             while (nameExists && !isComplete()) {
-                while (LocalTime.now().isBefore(startTime) || LocalTime.now().isAfter(endTime))
-                {
-                   Thread.sleep(1000);
-                }
                 boolean camStatus = false;
                 HSSFCell cellNetStatus = null;
                 try {
@@ -91,148 +78,76 @@ public class CameraChecker {
                     cellNetStatus = row.createCell(statusCellNumber); // netStatus
 
                     currentRow++;
+
                     Camera camera = new Camera(cellName.getStringCellValue().trim(),
                             cellIpAddress.getStringCellValue().trim(),
                             cellType.getStringCellValue().trim(),
                             cellCamPort.getStringCellValue().trim()
                     );
 
-                    if (!pingHost(camera.getIpAddress())) {
-                        throw new Exception("ACHTUNG! No ping from camera " +
-                                camera.getName() + " with ip " + camera.getIpAddress());
-                    }
-                    RTSPdata rtspData;
-                    if (rtspDataList.containsKey(camera.getType())) {
-                        rtspData = rtspDataList.get(camera.getType());
-                    } else {
-                        throw new Exception("ACHTUNG! PropertiesFile has no type of camera " + camera.getType());
-                    }
-
-                    String rtspAddress;
-                    String screenNameMask;
-                    if (!rtspData.isPvn()) {
-                        rtspAddress = String.format("rtsp://%s:%s@%s:%s%s",
-                                rtspData.getLogin(), rtspData.getPass(),
-                                camera.getIpAddress(), rtspData.getPort(),
-                                rtspData.getChannel());
-
-                        // маска имени файла, начиная с папки. Разеделние на папки через /
-                        screenNameMask =
-                                screensPath +
-                                        "/" + getNowDate() +
-                                        "/" + rtspData.getFoldername() +
-                                        "/" + camera.getName() + "_IP" + camera.getIpAddress() + ".png";
-                    } else {
-                        String channel = camera.getCamPort().equals("1") ?
-                                rtspData.getChannel().replace("[PORT]", "") :
-                                rtspData.getChannel().replace("[PORT]", camera.getCamPort());
-                        rtspAddress = String.format("rtsp://%s:%s@%s:%s%s",
-                                rtspData.getLogin(), rtspData.getPass(),
-                                camera.getIpAddress(), rtspData.getPort(),
-                                channel);
-
-                        // маска имени файла, начиная с папки. Разеделние на папки через /
-                        screenNameMask =
-                                screensPath +
-                                        "/" + getNowDate() +
-                                        "/" + rtspData.getFoldername() +
-                                        "/" + "IP" + camera.getIpAddress() +
-                                        "/" + camera.getName() + ".png";
-                    }
-
-                    camStatus = saveScreen(rtspAddress, screenNameMask, mediaPlayer, 5);
-                }
-                catch (Exception e)
-                {
+                    resultList.add(new CamStatus(serviceCamsTest.submit(new TaskTestCamera(camera, screensPath, startTime, endTime)), cellNetStatus));
+                } catch (Exception e) {
                     LOG.info(e.getMessage());
                 }
-                finally {
-                    if (!nameExists) {
-                        break;
-                    }
-                    else
-                    {
+            }
+
+
+            while (!resultList.isEmpty()) {
+                Iterator<CamStatus> iterator = resultList.iterator();
+                while(iterator.hasNext()) {
+                    CamStatus camStatus = iterator.next();
+                    try {
+                        if (camStatus.getTask().isDone()) {
+                            if (camStatus.getTask().get()) {
+                                camStatus.getCellNetStatus().setCellValue("Да");
+                                camStatus.getCellNetStatus().getCellStyle().setFillForegroundColor(HSSFColor.GREEN.index);
+                            } else {
+                                camStatus.getCellNetStatus().setCellValue("Нет");
+                                camStatus.getCellNetStatus().getCellStyle().setFillForegroundColor(HSSFColor.RED.index);
+                            }
+                            camsTestedCount++;
+                            iterator.remove();
+                        }
+                    } catch (Exception e) {
+                        LOG.info(e.getMessage());
+                        camStatus.getCellNetStatus().setCellValue("Нет");
+                        camStatus.getCellNetStatus().getCellStyle().setFillForegroundColor(HSSFColor.RED.index);
+                        iterator.remove();
                         camsTestedCount++;
-                    }
-                    if (camStatus)
-                    {
-                        cellNetStatus.setCellValue("Да");
-                        cellNetStatus.getCellStyle().setFillForegroundColor(HSSFColor.GREEN.index);
-                    }
-                    else
-                    {
-                        cellNetStatus.setCellValue("Нет");
-                        cellNetStatus.getCellStyle().setFillForegroundColor(HSSFColor.RED.index);
-                    }
-                    boolean writed = true;
-                    while (writed) {
-                        try (FileOutputStream outputStream = new FileOutputStream(destinationPath)) {
-                            myExcelBook.write(outputStream);
-                            writed = false;
-                        }
-                        catch (IOException e)
-                        {
-                            LOG.info(e.getMessage());
-                        }
                     }
                 }
             }
+
+
+            boolean writed = true;
+            while (writed) {
+                try (FileOutputStream outputStream = new FileOutputStream(destinationPath)) {
+                    myExcelBook.write(outputStream);
+                    writed = false;
+                } catch (IOException e) {
+                    LOG.info(e.getMessage());
+                }
+            }
+
             myExcelBook.close();
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             LOG.info(e.getMessage());
         }
+        serviceMediaPlayer.shutdown();
+        serviceCamsTest.shutdown();
         complete = true;
     }
 
-    private String getNowDate()
-    {
-        return LocalDate.now().format(DateTimeUtil.DATE_FORMATTER);
+    public boolean isComplete() {
+        return complete;
     }
 
-    private MediaPlayer initMediaPlayer()
-    {
-        NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(), "C:\\vlc");
-        MediaPlayerFactory factory = new MediaPlayerFactory();
-        return factory.newEmbeddedMediaPlayer();
+    public void setComplete(boolean complete) {
+        this.complete = complete;
     }
 
-    private boolean saveScreen(final String rtspAddress, final String savePath, final MediaPlayer mediaPlayer, int repeatsCount)
-    {
-        try {
-            LOG.debug("ACHTUNG! Starting vlc for stream " + rtspAddress);
-
-            Runnable taskPlay = () -> { mediaPlayer.playMedia(rtspAddress); };
-            Future task = serviceMediaPlayer.submit(taskPlay);
-            Thread.sleep(20000);
-            File file = new File(savePath);
-            mediaPlayer.saveSnapshot(file);
-            mediaPlayer.stop();
-            while (!task.isDone())
-            {
-                Thread.sleep(1);
-            }
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-        LOG.debug("ACHTUNG! Player for stream " + rtspAddress + " closed");
-        if(!(new File(savePath).exists()) && repeatsCount-- > 0) {
-            LOG.debug("ACHTUNG! Not available screen for stream " + rtspAddress + ". Trying again, elapsed repeats: " + repeatsCount);
-            saveScreen(rtspAddress, savePath, mediaPlayer, repeatsCount);
-        }
-        return (new File(savePath).exists());
-    }
-
-    private boolean pingHost(String host) {
-        try {
-            Process p1 = java.lang.Runtime.getRuntime().exec("ping -n 1 " + host);
-            int returnVal = p1.waitFor();
-            return  (returnVal==0);
-        } catch (Exception e) {
-            return false;
-        }
+    public int getCamsTestedCount() {
+        return camsTestedCount;
     }
 }
 
