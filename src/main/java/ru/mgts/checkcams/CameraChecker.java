@@ -89,9 +89,9 @@ public class CameraChecker {
             }
 
 
-            while (!resultList.isEmpty()) {
+            while (!resultList.isEmpty() && !isComplete()) {
                 Iterator<CamStatus> iterator = resultList.iterator();
-                while(iterator.hasNext()) {
+                while(iterator.hasNext() && !isComplete()) {
                     CamStatus camStatus = iterator.next();
                     try {
                         if (camStatus.getTask().isDone()) {
