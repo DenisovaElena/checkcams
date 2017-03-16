@@ -62,7 +62,7 @@ public class TaskTestCamera implements Callable<Boolean> {
 
         String rtspAddress;
         String screenNameMask;
-        if (!rtspData.isPvn()) {
+        if (!rtspData.getCamClass().equals("PVN") && !rtspData.getCamClass().equals("OVN")) {
             rtspAddress = String.format("rtsp://%s:%s@%s:%s%s",
                     rtspData.getLogin(), rtspData.getPass(),
                     camera.getIpAddress(), rtspData.getPort(),
@@ -72,12 +72,14 @@ public class TaskTestCamera implements Callable<Boolean> {
             screenNameMask =
                     screensPath +
                             "/" + getNowDate() +
-                            "/" + rtspData.getFoldername() +
+                            "/" + rtspData.getFolderName() +
                             "/" + camera.getName() + "_IP" + camera.getIpAddress() + ".png";
         } else {
-            String channel = camera.getCamPort().equals("1") ?
+            String channel = camera.getCamPort().equals("1") && rtspData.getCamClass().equals("PVN") ?
                     rtspData.getChannel().replace("[PORT]", "") :
                     rtspData.getChannel().replace("[PORT]", camera.getCamPort());
+
+
             rtspAddress = String.format("rtsp://%s:%s@%s:%s%s",
                     rtspData.getLogin(), rtspData.getPass(),
                     camera.getIpAddress(), rtspData.getPort(),
@@ -87,7 +89,7 @@ public class TaskTestCamera implements Callable<Boolean> {
             screenNameMask =
                     screensPath +
                             "/" + getNowDate() +
-                            "/" + rtspData.getFoldername() +
+                            "/" + rtspData.getFolderName() +
                             "/" + "IP" + camera.getIpAddress() +
                             "/" + camera.getName() + ".png";
         }

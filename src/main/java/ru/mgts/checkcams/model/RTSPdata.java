@@ -5,60 +5,53 @@ import java.util.List;
 /**
  * Created by Dummy on 10.03.2017.
  */
-public class RTSPdata
-{
+public class RTSPdata {
     private String type;
     private String login;
     private String pass;
     private String port;
     private String codec;
-    private boolean pvn;
-    private String foldername;
+    private String camClass;
+    private String folderName;
     private String channel;
 
-    public RTSPdata(String type, String login, String pass, String port, String codec, Boolean ispvn, String foldername, String channel)
-    {
+    public RTSPdata(String type, String login, String pass, String port, String codec, String camClass, String folderName, String channel) {
         this.type = type;
         this.login = login;
         this.pass = pass;
         this.port = port;
         this.codec = codec;
-        this.pvn = ispvn;
-        this.foldername = foldername;
+        this.camClass = camClass;
+        this.folderName = folderName;
         this.channel = channel;
     }
 
-    public String getType()
-    {
+    public String getType() {
         return type;
     }
 
-    public String getLogin()
-    {
+    public String getLogin() {
         return login;
     }
 
-    public String getPass()
-    {
+    public String getPass() {
         return pass;
     }
 
-    public String getPort()
-    {
+    public String getPort() {
         return port;
     }
 
-    public String getCodec()
-    {
+    public String getCodec() {
         return codec;
     }
 
-    public boolean isPvn() {
-        return pvn;
+    public String getCamClass() {
+        return camClass;
     }
 
-    public String getFoldername() {
-        return foldername;
+    public String getFolderName() {
+        return folderName;
     }
 
     public String getChannel() {
