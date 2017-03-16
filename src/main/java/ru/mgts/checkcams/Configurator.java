@@ -36,7 +36,7 @@ public class Configurator
                                 prop.getProperty("pass" + i),
                                 prop.getProperty("port" + i),
                                 prop.getProperty("codec" + i),
-                                Boolean.parseBoolean(prop.getProperty("ispvn" + i)),
+                                prop.getProperty("class" + i),
                                 prop.getProperty("foldername" + i),
                                 prop.getProperty("channel" + i)
                                 ));
