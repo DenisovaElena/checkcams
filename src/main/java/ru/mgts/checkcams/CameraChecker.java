@@ -15,6 +15,8 @@ import ru.mgts.checkcams.model.RTSPdata;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -29,28 +31,34 @@ public class CameraChecker {
 
     protected static final Logger LOG = LoggerFactory.getLogger(CControl.class);
 
-    private boolean complete;
+    private volatile boolean complete;
     private int camsTestedCount;
-    private int camsTestedTodayCount;
-    private static boolean isPaused;
+    private volatile int camsTestedTodayCount;
 
-    public CameraChecker()
-    {
-    }
-
-    private ThreadFactory threadFactoryMediaPlayers = new ThreadFactoryBuilder()
-            .setNameFormat("mediaPlayers-%d")
-            .build();
-    protected static ExecutorService serviceMediaPlayer = Executors.newFixedThreadPool(1, threadFactoryMediaPlayers);
-
-    private static ThreadFactory threadFactoryCamsTest = new ThreadFactoryBuilder()
-            .setNameFormat("camsTest-%d")
-            .build();
-    protected static ExecutorService serviceCamsTest = Executors.newFixedThreadPool(10, threadFactoryCamsTest);
-
+    private volatile static boolean isPaused;
+    protected static ExecutorService serviceMediaPlayer;
+    protected static ExecutorService serviceCamsTest;
     public static Map<String, RTSPdata> rtspDataList = Configurator.loadConfigs();
 
-    public void startCameraIterator(String sourcePath, String destinationPath, String screensPath, LocalTime startTime, LocalTime endTime) {
+    public CameraChecker() {
+        reset();
+    }
+
+    public void reset()
+    {
+        ThreadFactory threadFactoryMediaPlayers = new ThreadFactoryBuilder()
+                .setNameFormat("mediaPlayers-%d")
+                .build();
+        ThreadFactory threadFactoryCamsTest = new ThreadFactoryBuilder()
+                .setNameFormat("camsTest-%d")
+                .build();
+        serviceMediaPlayer = Executors.newFixedThreadPool(1, threadFactoryMediaPlayers);
+        serviceCamsTest = Executors.newFixedThreadPool(10, threadFactoryCamsTest);
+
+    }
+
+    public void startCameraIterator(String sourcePath, String destinationPath, String screensPath,
+                                    LocalTime startTime, LocalTime endTime, int maxCamsPerDay) {
         try {
             //saveScreen("rtsp://admin:admin@10.209.246.42:554/channel1", "C:\\screens\\test.png", mediaPlayer);
             //saveScreen("file:///C:\\Szamar Madar.avi", "C:\\screens\\test.png", mediaPlayer);
@@ -63,6 +71,7 @@ public class CameraChecker {
             HSSFSheet sheet = myExcelBook.getSheetAt(0);
             int statusCellNumber = 51;
             sheet.getRow(1).createCell(statusCellNumber).setCellValue("Скрин");
+            sheet.getRow(1).createCell(statusCellNumber + 1).setCellValue("Наши действия");
             boolean nameExists = true;
             int currentRow = 2;
             List<CamStatus> resultList = new ArrayList<>();
@@ -109,42 +118,58 @@ public class CameraChecker {
                                 camStatus.getCellNetStatus().setCellValue("Нет");
                                 camStatus.getCellNetStatus().getCellStyle().setFillForegroundColor(HSSFColor.RED.index);
                             }
+                            iterator.remove();
+                            camsTestedCount++;
+                            camsTestedTodayCount++;
                         }
                     } catch (Exception e) {
                         LOG.info(e.getMessage());
                         camStatus.getCellNetStatus().setCellValue("Нет");
                         camStatus.getCellNetStatus().getCellStyle().setFillForegroundColor(HSSFColor.RED.index);
-                    }
-                    finally
-                    {
                         iterator.remove();
                         camsTestedCount++;
                         camsTestedTodayCount++;
-                        if (camsTestedTodayCount >= 1000)
+                    }
+                    finally
+                    {
+                        if (camsTestedTodayCount >= maxCamsPerDay)
                         {
-                            serviceCamsTest.
+                            isPaused = true;
+                            saveExcel(myExcelBook, destinationPath);
+                            while (LocalDateTime.now().isBefore(LocalDateTime.of(LocalDate.now().plusDays(1), startTime)))
+                            {
+                                Thread.sleep(1000);
+                            }
+                            camsTestedTodayCount = 0;
+                            isPaused = false;
                         }
                     }
                 }
             }
 
 
-            boolean writed = true;
-            while (writed) {
-                try (FileOutputStream outputStream = new FileOutputStream(destinationPath)) {
-                    myExcelBook.write(outputStream);
-                    writed = false;
-                } catch (IOException e) {
-                    LOG.info(e.getMessage());
-                }
-            }
-
+            saveExcel(myExcelBook, destinationPath);
             myExcelBook.close();
         } catch (Exception e) {
             LOG.info(e.getMessage());
         }
 
         complete = true;
+        serviceCamsTest.shutdown();
+        serviceMediaPlayer.shutdown();
+    }
+
+    private void saveExcel(HSSFWorkbook excelBook, String destinationPath)
+    {
+        boolean writed = false;
+        while (!writed) {
+            try (FileOutputStream outputStream = new FileOutputStream(destinationPath)) {
+                excelBook.write(outputStream);
+                writed = true;
+            } catch (IOException e) {
+                LOG.info(e.getMessage());
+            }
+        }
     }
 
     public boolean isComplete() {
@@ -157,6 +182,14 @@ public class CameraChecker {
 
     public int getCamsTestedCount() {
         return camsTestedCount;
+    }
+
+    public static boolean isPaused() {
+        return isPaused;
+    }
+
+    public static void setIsPaused(boolean isPaused) {
+        CameraChecker.isPaused = isPaused;
     }
 }
 

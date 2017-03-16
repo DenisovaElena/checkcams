@@ -15,6 +15,7 @@ import uk.co.caprica.vlcj.runtime.RuntimeUtil;
 
 import java.io.File;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -43,10 +44,11 @@ public class TaskTestCamera implements Callable<Boolean> {
     @Override
     public Boolean call() throws Exception {
         Thread.currentThread().setName("Thread test for camera: " + camera.getName() + " with ip " + camera.getIpAddress());
-        while (LocalTime.now().isBefore(startTime) || LocalTime.now().isAfter(endTime))
+        while (LocalTime.now().isBefore(startTime) || LocalTime.now().isAfter(endTime) || CameraChecker.isPaused())
         {
             Thread.sleep(1000);
         }
+
         MediaPlayer mediaPlayer = initMediaPlayer();
 
         if (!pingHost(camera.getIpAddress())) {
@@ -104,7 +106,7 @@ public class TaskTestCamera implements Callable<Boolean> {
 
     private MediaPlayer initMediaPlayer()
     {
-        NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(), "C:\\vlc");
+        NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(), "C:\\vlc64");
         MediaPlayerFactory factory = new MediaPlayerFactory();
         return factory.newEmbeddedMediaPlayer();
     }
@@ -145,5 +147,9 @@ public class TaskTestCamera implements Callable<Boolean> {
         } catch (Exception e) {
             return false;
         }
+    }
+    private void disableControls()
+    {
+
     }
 }

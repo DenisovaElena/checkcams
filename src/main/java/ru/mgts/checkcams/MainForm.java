@@ -8,6 +8,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowListener;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 import static ru.mgts.checkcams.CameraChecker.serviceCamsTest;
@@ -37,6 +38,8 @@ public class MainForm extends JFrame{
     private JLabel labelCamsTestedCounter;
     private JTextArea textAreaLog;
     private JButton buttonEnd;
+    private JLabel labelCamsCount;
+    private JSpinner spinnerCamsCount;
 
     public MainForm()
     {
@@ -46,6 +49,7 @@ public class MainForm extends JFrame{
 
         textStartTime.setText("08:00");
         textEndTime.setText("17:00");
+        spinnerCamsCount.setValue(1000);
 
         pack();
         setTitle("Опрос камер");
@@ -56,6 +60,7 @@ public class MainForm extends JFrame{
         setVisible(true);
 
         CameraChecker cameraChecker = new CameraChecker();
+
         buttonEnd.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -66,6 +71,7 @@ public class MainForm extends JFrame{
             @Override
             public void actionPerformed(ActionEvent e) {
                 buttonStartChecker.setEnabled(false);
+                cameraChecker.reset();
                 Thread checkerThread = new Thread()
                 {
                     @Override
@@ -76,7 +82,8 @@ public class MainForm extends JFrame{
                                 textDestinationPath.getText().trim(),
                                 textScreensPath.getText().trim(),
                                 DateTimeUtil.parseLocalTime(textStartTime.getText()),
-                                DateTimeUtil.parseLocalTime(textEndTime.getText())
+                                DateTimeUtil.parseLocalTime(textEndTime.getText()),
+                                (Integer) spinnerCamsCount.getValue()
                         );
                     }
                 };
@@ -89,6 +96,12 @@ public class MainForm extends JFrame{
                         while (!cameraChecker.isComplete())
                         {
                             labelCamsTestedCounter.setText(cameraChecker.getCamsTestedCount() + "");
+                            if (!isWorkTime())
+                            {
+                                textAreaLog.append("Опрос приостановлен до начала рабочего времени\n");
+                                while (!isWorkTime()) {}
+                                textAreaLog.append("Опрос возобновлен\n");
+                            }
                         }
                         textAreaLog.append("Опрос завершен\n");
                         try {
@@ -150,4 +163,19 @@ public class MainForm extends JFrame{
         });
     }
 
+    private boolean isWorkTime()
+    {
+        boolean result = false;
+        try {
+            if (!LocalTime.now().isBefore(DateTimeUtil.parseLocalTime(textStartTime.getText()))
+                    && !LocalTime.now().isAfter(DateTimeUtil.parseLocalTime(textEndTime.getText()))) {
+                result = true;
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        return result;
+    }
 }
