@@ -206,7 +206,7 @@ public class CameraChecker {
                 }
             };
             playThread.start();
-            Thread.sleep(20000);
+            Thread.sleep(50000);
             File file = new File(savePath);
             mediaPlayer.saveSnapshot(file);
             mediaPlayer.stop();
