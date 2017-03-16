@@ -66,7 +66,7 @@ public class MainForm extends JFrame{
                 {
                     @Override
                     public void run() {
-                        textAreaLog.append("Опрос начат\n");
+                        textAreaLog.setText("Опрос начат\n");
                         cameraChecker.startCameraIterator(
                                 textSourcePath.getText().trim(),
                                 textDestinationPath.getText().trim(),

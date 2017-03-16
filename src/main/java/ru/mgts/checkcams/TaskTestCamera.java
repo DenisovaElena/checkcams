@@ -42,6 +42,7 @@ public class TaskTestCamera implements Callable<Boolean> {
 
     @Override
     public Boolean call() throws Exception {
+        Thread.currentThread().setName("Thread test for camera: " + camera.getName() + " with ip " + camera.getIpAddress());
         while (LocalTime.now().isBefore(startTime) || LocalTime.now().isAfter(endTime))
         {
             Thread.sleep(1000);
@@ -111,7 +112,7 @@ public class TaskTestCamera implements Callable<Boolean> {
         try {
             LOG.debug("ACHTUNG! Starting vlc for stream " + rtspAddress);
 
-            Runnable taskPlay = () -> { mediaPlayer.playMedia(rtspAddress); };
+            Runnable taskPlay = () -> { Thread.currentThread().setName("Thread vlc for: " + rtspAddress); mediaPlayer.playMedia(rtspAddress); };
             Future task = serviceMediaPlayer.submit(taskPlay);
             Thread.sleep(20000);
             File file = new File(savePath);
