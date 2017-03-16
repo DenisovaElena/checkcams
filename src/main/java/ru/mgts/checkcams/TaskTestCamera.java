@@ -116,7 +116,7 @@ public class TaskTestCamera implements Callable<Boolean> {
 
             Runnable taskPlay = () -> { Thread.currentThread().setName("Thread vlc for: " + rtspAddress); mediaPlayer.playMedia(rtspAddress); };
             Future task = serviceMediaPlayer.submit(taskPlay);
-            Thread.sleep(20000);
+            Thread.sleep(50000);
             File file = new File(savePath);
             mediaPlayer.saveSnapshot(file);
             mediaPlayer.stop();

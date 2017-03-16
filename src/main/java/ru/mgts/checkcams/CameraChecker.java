@@ -31,8 +31,14 @@ public class CameraChecker {
 
     private boolean complete;
     private int camsTestedCount;
+    private int camsTestedTodayCount;
+    private static boolean isPaused;
 
-    private static ThreadFactory threadFactoryMediaPlayers = new ThreadFactoryBuilder()
+    public CameraChecker()
+    {
+    }
+
+    private ThreadFactory threadFactoryMediaPlayers = new ThreadFactoryBuilder()
             .setNameFormat("mediaPlayers-%d")
             .build();
     protected static ExecutorService serviceMediaPlayer = Executors.newFixedThreadPool(1, threadFactoryMediaPlayers);
@@ -50,8 +56,9 @@ public class CameraChecker {
             //saveScreen("file:///C:\\Szamar Madar.avi", "C:\\screens\\test.png", mediaPlayer);
             //saveScreen("rtsp://localhost:5544/pusya", "C:\\screens\\test.png", mediaPlayer, 3);
 
-            // инициализируем хэш-карту - классификатор типов камер. Ключ - тип камеры, значение - структура ru.mgts.checkcams.model.RTSPdata
             camsTestedCount = 0;
+            camsTestedTodayCount = 0;
+            isPaused = false;
             HSSFWorkbook myExcelBook = new HSSFWorkbook(new FileInputStream(sourcePath));
             HSSFSheet sheet = myExcelBook.getSheetAt(0);
             int statusCellNumber = 51;
@@ -102,15 +109,21 @@ public class CameraChecker {
                                 camStatus.getCellNetStatus().setCellValue("Нет");
                                 camStatus.getCellNetStatus().getCellStyle().setFillForegroundColor(HSSFColor.RED.index);
                             }
-                            camsTestedCount++;
-                            iterator.remove();
                         }
                     } catch (Exception e) {
                         LOG.info(e.getMessage());
                         camStatus.getCellNetStatus().setCellValue("Нет");
                         camStatus.getCellNetStatus().getCellStyle().setFillForegroundColor(HSSFColor.RED.index);
+                    }
+                    finally
+                    {
                         iterator.remove();
                         camsTestedCount++;
+                        camsTestedTodayCount++;
+                        if (camsTestedTodayCount >= 1000)
+                        {
+                            serviceCamsTest.
+                        }
                     }
                 }
             }
