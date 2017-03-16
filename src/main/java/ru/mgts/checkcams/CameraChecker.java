@@ -37,13 +37,12 @@ public class CameraChecker {
             .build();
     protected static ExecutorService serviceMediaPlayer = Executors.newFixedThreadPool(1, threadFactoryMediaPlayers);
 
-    private ThreadFactory threadFactoryCamsTest = new ThreadFactoryBuilder()
+    private static ThreadFactory threadFactoryCamsTest = new ThreadFactoryBuilder()
             .setNameFormat("camsTest-%d")
             .build();
-    private ExecutorService serviceCamsTest = Executors.newFixedThreadPool(10, threadFactoryCamsTest);
+    protected static ExecutorService serviceCamsTest = Executors.newFixedThreadPool(10, threadFactoryCamsTest);
 
     public static Map<String, RTSPdata> rtspDataList = Configurator.loadConfigs();
-
 
     public void startCameraIterator(String sourcePath, String destinationPath, String screensPath, LocalTime startTime, LocalTime endTime) {
         try {
@@ -52,8 +51,6 @@ public class CameraChecker {
             //saveScreen("rtsp://localhost:5544/pusya", "C:\\screens\\test.png", mediaPlayer, 3);
 
             // инициализируем хэш-карту - классификатор типов камер. Ключ - тип камеры, значение - структура ru.mgts.checkcams.model.RTSPdata
-
-            complete = false;
             camsTestedCount = 0;
             HSSFWorkbook myExcelBook = new HSSFWorkbook(new FileInputStream(sourcePath));
             HSSFSheet sheet = myExcelBook.getSheetAt(0);
@@ -133,7 +130,7 @@ public class CameraChecker {
         } catch (Exception e) {
             LOG.info(e.getMessage());
         }
-        serviceCamsTest.shutdown();
+
         complete = true;
     }
 

@@ -10,6 +10,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowListener;
 import java.time.format.DateTimeFormatter;
 
+import static ru.mgts.checkcams.CameraChecker.serviceCamsTest;
 import static ru.mgts.checkcams.CameraChecker.serviceMediaPlayer;
 
 /**
@@ -84,11 +85,19 @@ public class MainForm extends JFrame{
                 {
                     @Override
                     public void run() {
+                        cameraChecker.setComplete(false);
                         while (!cameraChecker.isComplete())
                         {
                             labelCamsTestedCounter.setText(cameraChecker.getCamsTestedCount() + "");
                         }
                         textAreaLog.append("Опрос завершен\n");
+                        try {
+                            checkerThread.join();
+                        }
+                        catch (InterruptedException e)
+                        {
+                            e.printStackTrace();
+                        }
                         buttonStartChecker.setEnabled(true);
                     }
                 };
@@ -136,6 +145,7 @@ public class MainForm extends JFrame{
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent e) {
                 serviceMediaPlayer.shutdown();
+                serviceCamsTest.shutdown();
             }
         });
     }
