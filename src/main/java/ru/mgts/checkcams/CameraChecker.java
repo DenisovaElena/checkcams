@@ -37,7 +37,7 @@ public class CameraChecker {
             .build();
     protected static ExecutorService serviceMediaPlayer = Executors.newFixedThreadPool(1, threadFactoryMediaPlayers);
 
-    private static ThreadFactory threadFactoryCamsTest = new ThreadFactoryBuilder()
+    private ThreadFactory threadFactoryCamsTest = new ThreadFactoryBuilder()
             .setNameFormat("camsTest-%d")
             .build();
     private ExecutorService serviceCamsTest = Executors.newFixedThreadPool(10, threadFactoryCamsTest);
@@ -133,7 +133,6 @@ public class CameraChecker {
         } catch (Exception e) {
             LOG.info(e.getMessage());
         }
-        serviceMediaPlayer.shutdown();
         serviceCamsTest.shutdown();
         complete = true;
     }

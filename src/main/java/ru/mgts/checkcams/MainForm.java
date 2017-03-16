@@ -7,7 +7,10 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowListener;
 import java.time.format.DateTimeFormatter;
+
+import static ru.mgts.checkcams.CameraChecker.serviceMediaPlayer;
 
 /**
  * Created by MakhrovSS on 15.03.2017.
@@ -128,6 +131,11 @@ public class MainForm extends JFrame{
                 fileChooser.showOpenDialog(rootPanel);
                 if (fileChooser.getSelectedFile() != null)
                     textScreensPath.setText(fileChooser.getSelectedFile().getAbsolutePath());
+            }
+        });
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                serviceMediaPlayer.shutdown();
             }
         });
     }
