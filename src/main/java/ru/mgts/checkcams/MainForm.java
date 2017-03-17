@@ -80,7 +80,7 @@ public class MainForm extends JFrame{
                     String destinationPath = textDestinationPath.getText().trim();
                     String screensPath = textScreensPath.getText().trim();
                     LocalTime startTime = DateTimeUtil.parseLocalTime(textStartTime.getText());
-                    LocalTime endTimeTime = DateTimeUtil.parseLocalTime(textStartTime.getText());
+                    LocalTime endTimeTime = DateTimeUtil.parseLocalTime(textEndTime.getText());
                     int maxCamsPerDay = (Integer) spinnerCamsCount.getValue();
                     String contractor = String.valueOf(comboBoxContractor.getSelectedItem());
                     if (!(new File(sourcePath).exists()))
@@ -210,5 +210,6 @@ public class MainForm extends JFrame{
 
     private void createUIComponents() {
         comboBoxContractor = new JComboBox(Configurator.loadConfigsContractor().toArray());
+        comboBoxContractor.addItem("");
     }
 }

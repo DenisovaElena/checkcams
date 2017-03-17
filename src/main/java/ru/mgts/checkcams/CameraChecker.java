@@ -85,7 +85,7 @@ public class CameraChecker {
                         break;
                     }
                     HSSFCell cellContractor = row.getCell(36); // name
-                    if (!cellContractor.getStringCellValue().equals(contractor))
+                    if (!contractor.equals("") && !cellContractor.getStringCellValue().equals(contractor))
                     {
                         continue;
                     }
