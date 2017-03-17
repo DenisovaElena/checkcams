@@ -2,6 +2,7 @@ package ru.mgts.checkcams;
 
 import ru.mgts.checkcams.model.RTSPdata;
 
+import java.io.InputStreamReader;
 import java.util.*;
 
 /**
@@ -9,7 +10,7 @@ import java.util.*;
  */
 public class Configurator
 {
-    public static Map<String, RTSPdata> loadConfigs()
+    public static Map<String, RTSPdata> loadConfigsRTSP()
     {
         Map<String, RTSPdata> rtspDataList = new HashMap<String, RTSPdata>();
 
@@ -47,5 +48,33 @@ public class Configurator
             e.printStackTrace();
         }
         return rtspDataList;
+    }
+
+    public static List<String> loadConfigsContractor()
+    {
+        List<String> contractorsList = new ArrayList<String>();
+
+        Properties prop = new Properties();
+
+        try
+        {
+            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            prop.load(new InputStreamReader(classLoader.getResourceAsStream("contractor.properties"), "UTF-8"));
+
+            int count = Integer.parseInt(prop.getProperty("count"));
+
+            for (int i = 0; i < count; i++)
+            {
+                if (prop.getProperty("orgName" + i) == null)
+                    continue;
+                contractorsList.add(prop.getProperty("orgName" + i));
+            }
+
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        return contractorsList;
     }
 }

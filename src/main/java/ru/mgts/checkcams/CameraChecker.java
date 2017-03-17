@@ -38,7 +38,7 @@ public class CameraChecker {
     private volatile static boolean isPaused;
     protected static ExecutorService serviceMediaPlayer;
     protected static ExecutorService serviceCamsTest;
-    public static Map<String, RTSPdata> rtspDataList = Configurator.loadConfigs();
+    public static Map<String, RTSPdata> rtspDataList = Configurator.loadConfigsRTSP();
 
     public CameraChecker() {
         reset();
@@ -58,7 +58,8 @@ public class CameraChecker {
     }
 
     public void startCameraIterator(String sourcePath, String destinationPath, String screensPath,
-                                    LocalTime startTime, LocalTime endTime, int maxCamsPerDay) {
+                                    LocalTime startTime, LocalTime endTime, int maxCamsPerDay,
+                                    String contractor) {
         try {
             //saveScreen("rtsp://admin:admin@10.209.246.42:554/channel1", "C:\\screens\\test.png", mediaPlayer);
             //saveScreen("file:///C:\\Szamar Madar.avi", "C:\\screens\\test.png", mediaPlayer);
@@ -76,7 +77,6 @@ public class CameraChecker {
             int currentRow = 2;
             List<CamStatus> resultList = new ArrayList<>();
             while (nameExists && !isComplete()) {
-                boolean camStatus = false;
                 HSSFCell cellNetStatus = null;
                 try {
                     HSSFRow row = sheet.getRow(currentRow);
@@ -84,13 +84,16 @@ public class CameraChecker {
                         nameExists = false;
                         break;
                     }
+                    HSSFCell cellContractor = row.getCell(36); // name
+                    if (!cellContractor.getStringCellValue().equals(contractor))
+                    {
+                        continue;
+                    }
                     HSSFCell cellName = row.getCell(2); // name
                     HSSFCell cellIpAddress = row.getCell(8); // ipAddress
                     HSSFCell cellType = row.getCell(7); // type
                     HSSFCell cellCamPort = row.getCell(9); // camPort
                     cellNetStatus = row.createCell(statusCellNumber); // netStatus
-
-                    currentRow++;
 
                     Camera camera = new Camera(cellName.getStringCellValue().trim(),
                             cellIpAddress.getStringCellValue().trim(),
@@ -101,6 +104,9 @@ public class CameraChecker {
                     resultList.add(new CamStatus(serviceCamsTest.submit(new TaskTestCamera(camera, screensPath, startTime, endTime)), cellNetStatus));
                 } catch (Exception e) {
                     LOG.info(e.getMessage());
+                }
+                finally {
+                    currentRow++;
                 }
             }
 

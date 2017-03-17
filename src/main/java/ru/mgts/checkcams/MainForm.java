@@ -8,9 +8,11 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowListener;
+import java.io.File;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
+import static javax.swing.JOptionPane.showMessageDialog;
 import static ru.mgts.checkcams.CameraChecker.serviceCamsTest;
 import static ru.mgts.checkcams.CameraChecker.serviceMediaPlayer;
 
@@ -40,6 +42,8 @@ public class MainForm extends JFrame{
     private JButton buttonEnd;
     private JLabel labelCamsCount;
     private JSpinner spinnerCamsCount;
+    private JLabel labelContractor;
+    private JComboBox comboBoxContractor;
 
     public MainForm()
     {
@@ -50,6 +54,7 @@ public class MainForm extends JFrame{
         textStartTime.setText("08:00");
         textEndTime.setText("17:00");
         spinnerCamsCount.setValue(1000);
+
 
         pack();
         setTitle("Опрос камер");
@@ -70,53 +75,77 @@ public class MainForm extends JFrame{
         buttonStartChecker.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                buttonStartChecker.setEnabled(false);
-                cameraChecker.reset();
-                Thread checkerThread = new Thread()
-                {
-                    @Override
-                    public void run() {
-                        textAreaLog.setText("Опрос начат\n");
-                        cameraChecker.startCameraIterator(
-                                textSourcePath.getText().trim(),
-                                textDestinationPath.getText().trim(),
-                                textScreensPath.getText().trim(),
-                                DateTimeUtil.parseLocalTime(textStartTime.getText()),
-                                DateTimeUtil.parseLocalTime(textEndTime.getText()),
-                                (Integer) spinnerCamsCount.getValue()
-                        );
+                try {
+                    String sourcePath = textSourcePath.getText().trim();
+                    String destinationPath = textDestinationPath.getText().trim();
+                    String screensPath = textScreensPath.getText().trim();
+                    LocalTime startTime = DateTimeUtil.parseLocalTime(textStartTime.getText());
+                    LocalTime endTimeTime = DateTimeUtil.parseLocalTime(textStartTime.getText());
+                    int maxCamsPerDay = (Integer) spinnerCamsCount.getValue();
+                    String contractor = String.valueOf(comboBoxContractor.getSelectedItem());
+                    if (!(new File(sourcePath).exists()))
+                    {
+                        showMessageDialog(null, "Не удается найти исходный файл");
                     }
-                };
+                    if (!(new File(destinationPath).exists()))
+                    {
+                        showMessageDialog(null, "Не указан результирующий файл");
+                    }
+                    if (!(new File(screensPath).exists()))
+                    {
+                        showMessageDialog(null, "Не указана папка для снимков экрана");
+                    }
 
-                Thread checkerListener = new Thread()
-                {
-                    @Override
-                    public void run() {
-                        cameraChecker.setComplete(false);
-                        while (!cameraChecker.isComplete())
-                        {
-                            labelCamsTestedCounter.setText(cameraChecker.getCamsTestedCount() + "");
-                            if (!isWorkTime())
-                            {
-                                textAreaLog.append("Опрос приостановлен до начала рабочего времени\n");
-                                while (!isWorkTime() && !cameraChecker.isComplete()) {}
-                                textAreaLog.append("Опрос возобновлен\n");
+
+
+                    buttonStartChecker.setEnabled(false);
+                    cameraChecker.reset();
+                    Thread checkerThread = new Thread() {
+                        @Override
+                        public void run() {
+                            textAreaLog.setText("Опрос начат\n");
+                            cameraChecker.startCameraIterator(
+                                    sourcePath,
+                                    destinationPath,
+                                    screensPath,
+                                    startTime,
+                                    endTimeTime,
+                                    maxCamsPerDay,
+                                    contractor
+                            );
+                        }
+                    };
+
+                    Thread checkerListener = new Thread() {
+                        @Override
+                        public void run() {
+                            cameraChecker.setComplete(false);
+                            while (!cameraChecker.isComplete()) {
+                                labelCamsTestedCounter.setText(cameraChecker.getCamsTestedCount() + "");
+                                if (!isWorkTime()) {
+                                    textAreaLog.append("Опрос приостановлен до начала рабочего времени\n");
+                                    while (!isWorkTime() && !cameraChecker.isComplete()) {
+                                    }
+                                    textAreaLog.append("Опрос возобновлен\n");
+                                }
                             }
+                            textAreaLog.append("Опрос завершен\n");
+                            try {
+                                checkerThread.join();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            buttonStartChecker.setEnabled(true);
                         }
-                        textAreaLog.append("Опрос завершен\n");
-                        try {
-                            checkerThread.join();
-                        }
-                        catch (InterruptedException e)
-                        {
-                            e.printStackTrace();
-                        }
-                        buttonStartChecker.setEnabled(true);
-                    }
-                };
+                    };
 
-                checkerThread.start();
-                checkerListener.start();
+                    checkerThread.start();
+                    checkerListener.start();
+                }
+                catch (Exception err)
+                {
+                    showMessageDialog(null, err.getMessage());
+                }
             }
         });
         buttonBrowseSourcePath.addActionListener(new ActionListener() {
@@ -177,5 +206,9 @@ public class MainForm extends JFrame{
             e.printStackTrace();
         }
         return result;
+    }
+
+    private void createUIComponents() {
+        comboBoxContractor = new JComboBox(Configurator.loadConfigsContractor().toArray());
     }
 }
