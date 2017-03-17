@@ -129,9 +129,13 @@ public class MainForm extends JFrame{
                                     textAreaLog.append("Опрос возобновлен\n");
                                 }
                             }
-                            textAreaLog.append("Опрос завершен\n");
+
                             try {
                                 checkerThread.join();
+                                textAreaLog.append("Опрос завершен\n");
+                                if (cameraChecker.getCamsTestedCount() == 0) {
+                                    showMessageDialog(null, "Не найдено ни одной камеры");
+                                }
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
