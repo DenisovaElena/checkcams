@@ -99,7 +99,7 @@ public class MainForm extends JFrame{
                             if (!isWorkTime())
                             {
                                 textAreaLog.append("Опрос приостановлен до начала рабочего времени\n");
-                                while (!isWorkTime()) {}
+                                while (!isWorkTime() && !cameraChecker.isComplete()) {}
                                 textAreaLog.append("Опрос возобновлен\n");
                             }
                         }
