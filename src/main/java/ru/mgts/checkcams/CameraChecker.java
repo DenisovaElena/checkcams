@@ -15,6 +15,7 @@ import ru.mgts.checkcams.model.RTSPdata;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -57,10 +58,10 @@ public class CameraChecker {
 
     }
 
-    public void startCameraIterator(String sourcePath, String destinationPath, String screensPath,
+    public void startCameraIterator(String sourcePath, String screensPath,
                                     LocalTime startTime, LocalTime endTime, int maxCamsPerDay,
                                     String contractor) {
-        try {
+        try (InputStream inputStream = new FileInputStream(sourcePath)){
             //saveScreen("rtsp://admin:admin@10.209.246.42:554/channel1", "C:\\screens\\test.png", mediaPlayer);
             //saveScreen("file:///C:\\Szamar Madar.avi", "C:\\screens\\test.png", mediaPlayer);
             //saveScreen("rtsp://localhost:5544/pusya", "C:\\screens\\test.png", mediaPlayer, 3);
@@ -68,7 +69,7 @@ public class CameraChecker {
             camsTestedCount = 0;
             camsTestedTodayCount = 0;
             isPaused = false;
-            HSSFWorkbook myExcelBook = new HSSFWorkbook(new FileInputStream(sourcePath));
+            HSSFWorkbook myExcelBook = new HSSFWorkbook(inputStream);
             HSSFSheet sheet = myExcelBook.getSheetAt(0);
             int dateScreenCell = 51;
             int ingeneerNumCellNuber = 52;
@@ -145,7 +146,7 @@ public class CameraChecker {
                         if (camsTestedTodayCount >= maxCamsPerDay)
                         {
                             isPaused = true;
-                            saveExcel(myExcelBook, destinationPath);
+                            saveExcel(myExcelBook, sourcePath);
                             while (LocalDateTime.now().isBefore(LocalDateTime.of(LocalDate.now().plusDays(1), startTime)))
                             {
                                 Thread.sleep(1000);
@@ -158,7 +159,7 @@ public class CameraChecker {
             }
 
 
-            saveExcel(myExcelBook, destinationPath);
+            saveExcel(myExcelBook, sourcePath);
             myExcelBook.close();
         } catch (Exception e) {
             LOG.info(e.getMessage());
@@ -169,11 +170,11 @@ public class CameraChecker {
         serviceMediaPlayer.shutdown();
     }
 
-    private void saveExcel(HSSFWorkbook excelBook, String destinationPath)
+    private void saveExcel(HSSFWorkbook excelBook, String sourcePath)
     {
         boolean writed = false;
         while (!writed) {
-            try (FileOutputStream outputStream = new FileOutputStream(destinationPath)) {
+            try (FileOutputStream outputStream = new FileOutputStream(sourcePath)) {
                 excelBook.write(outputStream);
                 writed = true;
             } catch (IOException e) {

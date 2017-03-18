@@ -108,7 +108,7 @@ public class TaskTestCamera implements Callable<Boolean> {
 
     private MediaPlayer initMediaPlayer()
     {
-        NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(), "C:\\vlc");
+        NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(), "C:\\vlc64");
         MediaPlayerFactory factory = new MediaPlayerFactory();
         return factory.newEmbeddedMediaPlayer();
     }

@@ -28,11 +28,8 @@ public class MainForm extends JFrame{
     private JFormattedTextField textStartTime;
     private JFormattedTextField textEndTime;
     private JLabel labelSourcePath;
-    private JLabel labelDestinationPath;
     private JButton buttonBrowseSourcePath;
-    private JButton buttonBrowseDestinationPath;
     private JTextField textSourcePath;
-    private JTextField textDestinationPath;
     private JLabel labelScreensPath;
     private JTextField textScreensPath;
     private JButton buttonBrowseScreensPath;
@@ -77,7 +74,6 @@ public class MainForm extends JFrame{
             public void actionPerformed(ActionEvent e) {
                 try {
                     String sourcePath = textSourcePath.getText().trim();
-                    String destinationPath = textDestinationPath.getText().trim();
                     String screensPath = textScreensPath.getText().trim();
                     LocalTime startTime = DateTimeUtil.parseLocalTime(textStartTime.getText());
                     LocalTime endTimeTime = DateTimeUtil.parseLocalTime(textEndTime.getText());
@@ -86,10 +82,6 @@ public class MainForm extends JFrame{
                     if (!(new File(sourcePath).exists()))
                     {
                         showMessageDialog(null, "Не удается найти исходный файл");
-                    }
-                    if (!(new File(destinationPath).exists()))
-                    {
-                        showMessageDialog(null, "Не указан результирующий файл");
                     }
                     if (!(new File(screensPath).exists()))
                     {
@@ -106,7 +98,6 @@ public class MainForm extends JFrame{
                             textAreaLog.setText("Опрос начат\n");
                             cameraChecker.startCameraIterator(
                                     sourcePath,
-                                    destinationPath,
                                     screensPath,
                                     startTime,
                                     endTimeTime,
@@ -162,18 +153,6 @@ public class MainForm extends JFrame{
                 fileChooser.showOpenDialog(rootPanel);
                 if (fileChooser.getSelectedFile() != null)
                     textSourcePath.setText(fileChooser.getSelectedFile().getAbsolutePath());
-            }
-        });
-        buttonBrowseDestinationPath.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JFileChooser fileChooser = new JFileChooser();
-                fileChooser.setPreferredSize(new Dimension(800, 600));
-                fileChooser.setFileFilter(new FileNameExtensionFilter("Excel XLS files", "xls"));
-                fileChooser.setCurrentDirectory(new java.io.File("."));
-                fileChooser.showSaveDialog(rootPanel);
-                if (fileChooser.getSelectedFile() != null)
-                    textDestinationPath.setText(fileChooser.getSelectedFile().getAbsolutePath());
             }
         });
         buttonBrowseScreensPath.addActionListener(new ActionListener() {
