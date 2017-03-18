@@ -70,9 +70,13 @@ public class CameraChecker {
             isPaused = false;
             HSSFWorkbook myExcelBook = new HSSFWorkbook(new FileInputStream(sourcePath));
             HSSFSheet sheet = myExcelBook.getSheetAt(0);
-            int statusCellNumber = 51;
-            sheet.getRow(1).createCell(statusCellNumber).setCellValue("Скрин");
-            sheet.getRow(1).createCell(statusCellNumber + 1).setCellValue("Наши действия");
+            int dateScreenCell = 51;
+            int ingeneerNumCellNuber = 52;
+            int statusCellNumber = 53;
+            sheet.getRow(1).createCell(dateScreenCell).setCellValue("Дата опроса");
+            sheet.getRow(1).createCell(ingeneerNumCellNuber).setCellValue("Номер инженера");
+            sheet.getRow(1).createCell(statusCellNumber).setCellValue("Скрин-да/нет");
+            sheet.getRow(1).createCell(statusCellNumber + 1).setCellValue("Результат");
             boolean nameExists = true;
             int currentRow = 2;
             List<CamStatus> resultList = new ArrayList<>();

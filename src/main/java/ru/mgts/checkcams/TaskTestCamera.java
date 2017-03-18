@@ -74,6 +74,7 @@ public class TaskTestCamera implements Callable<Boolean> {
             screenNameMask =
                     screensPath +
                             "/" + getNowDate() +
+                            "/" +                 //сюда вписать папку Номер инженера
                             "/" + rtspData.getFolderName() +
                             "/" + camera.getName() + "_IP" + camera.getIpAddress() + ".png";
         } else {
@@ -91,8 +92,9 @@ public class TaskTestCamera implements Callable<Boolean> {
             screenNameMask =
                     screensPath +
                             "/" + getNowDate() +
+                            "/" +                    //сюда вписать паку Номер инженера
                             "/" + rtspData.getFolderName() +
-                            "/" + "IP" + camera.getIpAddress() +
+                            "/" + camera.getName() +"_IP" + camera.getIpAddress() +
                             "/" + camera.getName() + ".png";
         }
 
@@ -117,7 +119,7 @@ public class TaskTestCamera implements Callable<Boolean> {
             LOG.debug("ACHTUNG! Starting vlc for stream " + rtspAddress);
 
             Runnable taskPlay = () -> { Thread.currentThread().setName("Thread vlc for: " + rtspAddress); mediaPlayer.playMedia(rtspAddress); };
-            Future task = serviceMediaPlayer.submit(taskPlay);
+            Future task =serviceMediaPlayer.submit(taskPlay);
             Thread.sleep(50000);
             File file = new File(savePath);
             mediaPlayer.saveSnapshot(file);
