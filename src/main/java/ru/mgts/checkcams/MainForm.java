@@ -41,6 +41,8 @@ public class MainForm extends JFrame{
     private JSpinner spinnerCamsCount;
     private JLabel labelContractor;
     private JComboBox comboBoxContractor;
+    private JSpinner spinnerEngineersCount;
+    private JLabel labelEngineersCount;
 
     public MainForm()
     {
@@ -51,6 +53,7 @@ public class MainForm extends JFrame{
         textStartTime.setText("08:00");
         textEndTime.setText("17:00");
         spinnerCamsCount.setValue(1000);
+        spinnerEngineersCount.setValue(5);
 
 
         pack();
@@ -78,6 +81,7 @@ public class MainForm extends JFrame{
                     LocalTime startTime = DateTimeUtil.parseLocalTime(textStartTime.getText());
                     LocalTime endTimeTime = DateTimeUtil.parseLocalTime(textEndTime.getText());
                     int maxCamsPerDay = (Integer) spinnerCamsCount.getValue();
+                    int engineersCountPerDay = (Integer) spinnerEngineersCount.getValue();
                     String contractor = String.valueOf(comboBoxContractor.getSelectedItem());
                     if (!(new File(sourcePath).exists()))
                     {
@@ -87,23 +91,31 @@ public class MainForm extends JFrame{
                     {
                         showMessageDialog(null, "Не указана папка для снимков экрана");
                     }
+                    if (engineersCountPerDay <= 0)
+                    {
+                        showMessageDialog(null, "Количество инженеров не должно быть больше нуля");
+                    }
 
-
+                    if (engineersCountPerDay > maxCamsPerDay)
+                    {
+                        showMessageDialog(null, "Количество инженеров не должно превышать количество камер");
+                    }
 
                     buttonStartChecker.setEnabled(false);
-                    cameraChecker.reset();
+                    cameraChecker.init(
+                            sourcePath,
+                            screensPath,
+                            startTime,
+                            endTimeTime,
+                            maxCamsPerDay,
+                            contractor,
+                            engineersCountPerDay
+                    );
                     Thread checkerThread = new Thread() {
                         @Override
                         public void run() {
                             textAreaLog.setText("Опрос начат\n");
-                            cameraChecker.startCameraIterator(
-                                    sourcePath,
-                                    screensPath,
-                                    startTime,
-                                    endTimeTime,
-                                    maxCamsPerDay,
-                                    contractor
-                            );
+                            cameraChecker.startCameraIterator();
                         }
                     };
 
@@ -113,9 +125,18 @@ public class MainForm extends JFrame{
                             cameraChecker.setComplete(false);
                             while (!cameraChecker.isComplete()) {
                                 labelCamsTestedCounter.setText(cameraChecker.getCamsTestedCount() + "");
-                                if (!isWorkTime()) {
+                                if (cameraChecker.isWorkTimeLock()) {
                                     textAreaLog.append("Опрос приостановлен до начала рабочего времени\n");
-                                    while (!isWorkTime() && !cameraChecker.isComplete()) {
+                                    labelCamsTestedCounter.setText(cameraChecker.getCamsTestedCount() + "");
+                                    while (cameraChecker.isWorkTimeLock() && !cameraChecker.isComplete()) {
+                                    }
+                                    textAreaLog.append("Опрос возобновлен\n");
+                                }
+
+                                if (cameraChecker.isMaxTestedPerDayLock()) {
+                                    textAreaLog.append("Опрос приостановлен поскольку достигнут лимит опроса в день\n");
+                                    labelCamsTestedCounter.setText(cameraChecker.getCamsTestedCount() + "");
+                                    while (cameraChecker.isMaxTestedPerDayLock() && !cameraChecker.isComplete()) {
                                     }
                                     textAreaLog.append("Опрос возобновлен\n");
                                 }
@@ -124,9 +145,6 @@ public class MainForm extends JFrame{
                             try {
                                 checkerThread.join();
                                 textAreaLog.append("Опрос завершен\n");
-                                if (cameraChecker.getCamsTestedCount() == 0) {
-                                    showMessageDialog(null, "Не найдено ни одной камеры");
-                                }
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
@@ -173,22 +191,6 @@ public class MainForm extends JFrame{
                 serviceCamsTest.shutdown();
             }
         });
-    }
-
-    private boolean isWorkTime()
-    {
-        boolean result = false;
-        try {
-            if (!LocalTime.now().isBefore(DateTimeUtil.parseLocalTime(textStartTime.getText()))
-                    && !LocalTime.now().isAfter(DateTimeUtil.parseLocalTime(textEndTime.getText()))) {
-                result = true;
-            }
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-        return result;
     }
 
     private void createUIComponents() {

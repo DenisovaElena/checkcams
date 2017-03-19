@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import ru.mgts.checkcams.model.CamStatus;
 import ru.mgts.checkcams.model.Camera;
 import ru.mgts.checkcams.model.RTSPdata;
+import ru.mgts.checkcams.util.DateTimeUtil;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -34,15 +35,32 @@ public class CameraChecker {
 
     private volatile boolean complete;
     private int camsTestedCount;
-    private volatile int camsTestedTodayCount;
+    private int camsTestedTodayCount;
 
-    private volatile static boolean isPaused;
+    private String sourcePath;
+    private String screensPath;
+    private LocalTime startTime;
+    private LocalTime endTime;
+    private int maxCamsPerDay;
+    private String contractor;
+    private int engineersCountPerDay;
+
     protected static ExecutorService serviceMediaPlayer;
     protected static ExecutorService serviceCamsTest;
     public static Map<String, RTSPdata> rtspDataList = Configurator.loadConfigsRTSP();
 
     public CameraChecker() {
-        reset();
+    }
+
+    public void init(String sourcePath, String screensPath, LocalTime startTime, LocalTime endTime, int maxCamsPerDay, String contractor, int engineersCountPerDay)
+    {
+        this.sourcePath = sourcePath;
+        this.screensPath = screensPath;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.maxCamsPerDay = maxCamsPerDay;
+        this.contractor = contractor;
+        this.engineersCountPerDay = engineersCountPerDay;
     }
 
     public void reset()
@@ -58,116 +76,146 @@ public class CameraChecker {
 
     }
 
-    public void startCameraIterator(String sourcePath, String screensPath,
-                                    LocalTime startTime, LocalTime endTime, int maxCamsPerDay,
-                                    String contractor) {
-        try (InputStream inputStream = new FileInputStream(sourcePath)){
-            //saveScreen("rtsp://admin:admin@10.209.246.42:554/channel1", "C:\\screens\\test.png", mediaPlayer);
-            //saveScreen("file:///C:\\Szamar Madar.avi", "C:\\screens\\test.png", mediaPlayer);
-            //saveScreen("rtsp://localhost:5544/pusya", "C:\\screens\\test.png", mediaPlayer, 3);
-
-            camsTestedCount = 0;
-            camsTestedTodayCount = 0;
-            isPaused = false;
-            HSSFWorkbook myExcelBook = new HSSFWorkbook(inputStream);
-            HSSFSheet sheet = myExcelBook.getSheetAt(0);
-            int dateScreenCell = 51;
-            int ingeneerNumCellNuber = 52;
-            int statusCellNumber = 53;
-            sheet.getRow(1).createCell(dateScreenCell).setCellValue("Дата опроса");
-            sheet.getRow(1).createCell(ingeneerNumCellNuber).setCellValue("Номер инженера");
-            sheet.getRow(1).createCell(statusCellNumber).setCellValue("Скрин-да/нет");
-            sheet.getRow(1).createCell(statusCellNumber + 1).setCellValue("Результат");
-            boolean nameExists = true;
-            int currentRow = 2;
-            List<CamStatus> resultList = new ArrayList<>();
-            while (nameExists && !isComplete()) {
-                HSSFCell cellNetStatus = null;
-                try {
-                    HSSFRow row = sheet.getRow(currentRow);
-                    if (row == null || row.getCell(7) == null || row.getCell(7).toString().trim().equals("")) {
-                        nameExists = false;
-                        break;
-                    }
-                    HSSFCell cellContractor = row.getCell(36); // name
-                    if (!contractor.equals("") && !cellContractor.getStringCellValue().equals(contractor))
-                    {
-                        continue;
-                    }
-                    HSSFCell cellName = row.getCell(2); // name
-                    HSSFCell cellIpAddress = row.getCell(8); // ipAddress
-                    HSSFCell cellType = row.getCell(7); // type
-                    HSSFCell cellCamPort = row.getCell(9); // camPort
-                    cellNetStatus = row.createCell(statusCellNumber); // netStatus
-
-                    Camera camera = new Camera(cellName.getStringCellValue().trim(),
-                            cellIpAddress.getStringCellValue().trim(),
-                            cellType.getStringCellValue().trim(),
-                            cellCamPort.getStringCellValue().trim()
-                    );
-
-                    resultList.add(new CamStatus(serviceCamsTest.submit(new TaskTestCamera(camera, screensPath, startTime, endTime)), cellNetStatus));
-                } catch (Exception e) {
-                    LOG.info(e.getMessage());
+    public void startCameraIterator() {
+        while (!isComplete()) {
+            try (InputStream inputStream = new FileInputStream(sourcePath)) {
+                while ((isMaxTestedPerDayLock() || isWorkTimeLock()) && !isComplete()) {
+                    Thread.sleep(1000);
                 }
-                finally {
-                    currentRow++;
-                }
-            }
 
+                //saveScreen("rtsp://admin:admin@10.209.246.42:554/channel1", "C:\\screens\\test.png", mediaPlayer);
+                //saveScreen("file:///C:\\Szamar Madar.avi", "C:\\screens\\test.png", mediaPlayer);
+                //saveScreen("rtsp://localhost:5544/pusya", "C:\\screens\\test.png", mediaPlayer, 3);
 
-            while (!resultList.isEmpty() && !isComplete()) {
-                Iterator<CamStatus> iterator = resultList.iterator();
-                while(iterator.hasNext() && !isComplete()) {
-                    CamStatus camStatus = iterator.next();
+                reset();
+                camsTestedCount = 0;
+                camsTestedTodayCount = 0;
+                int camsPerEngineer = maxCamsPerDay / engineersCountPerDay;
+                int remainder = maxCamsPerDay % engineersCountPerDay;
+                HSSFWorkbook myExcelBook = new HSSFWorkbook(inputStream);
+                HSSFSheet sheet = myExcelBook.getSheetAt(0);
+                int dateNetStatusCellNumber = 51;
+                int netStatusCellNumber = 52;
+                int engineerNumCellNumber = 53;
+                int resultCellNumber = 54;
+                sheet.getRow(1).createCell(dateNetStatusCellNumber).setCellValue("Дата опроса");
+                sheet.getRow(1).createCell(netStatusCellNumber).setCellValue("Скрин-да/нет");
+                sheet.getRow(1).createCell(engineerNumCellNumber).setCellValue("Номер инженера");
+                sheet.getRow(1).createCell(resultCellNumber).setCellValue("Результат");
+                boolean nameExists = true;
+                int currentRow = 2;
+                List<CamStatus> resultList = new ArrayList<>();
+                int currentEngineer = 1;
+                while (nameExists && !isComplete() && resultList.size() <= maxCamsPerDay) {
+                    HSSFCell cellDateNetStatus = null;
+                    HSSFCell cellNetStatus = null;
+                    HSSFCell cellEngineerNum = null;
+                    HSSFCell cellContractor = null;
+
                     try {
-                        if (camStatus.getTask().isDone()) {
-                            if (camStatus.getTask().get()) {
-                                camStatus.getCellNetStatus().setCellValue("Да");
-                                camStatus.getCellNetStatus().getCellStyle().setFillForegroundColor(HSSFColor.GREEN.index);
-                            } else {
-                                camStatus.getCellNetStatus().setCellValue("Нет");
-                                camStatus.getCellNetStatus().getCellStyle().setFillForegroundColor(HSSFColor.RED.index);
-                            }
-                            iterator.remove();
-                            camsTestedCount++;
-                            camsTestedTodayCount++;
+                        HSSFRow row = sheet.getRow(currentRow);
+                        if (row == null || row.getCell(7) == null || row.getCell(7).toString().trim().equals("")) {
+                            nameExists = false;
+                            break;
+                        }
+
+                        cellNetStatus = row.createCell(netStatusCellNumber); // netStatus
+                        if (cellNetStatus.getStringCellValue().trim().equals("Да"))
+                        {
+                            continue;
+                        }
+
+                        cellContractor = row.getCell(36); // contractor
+                        if (!contractor.equals("") && !cellContractor.getStringCellValue().equals(contractor)) {
+                            continue;
+                        }
+                        HSSFCell cellName = row.getCell(2); // name
+                        HSSFCell cellIpAddress = row.getCell(8); // ipAddress
+                        HSSFCell cellType = row.getCell(7); // type
+                        HSSFCell cellCamPort = row.getCell(9); // camPort
+                        cellDateNetStatus = row.createCell(dateNetStatusCellNumber); // dateNetStatus
+                        cellEngineerNum = row.createCell(engineerNumCellNumber); // engineerNum
+
+                        Camera camera = new Camera(cellName.getStringCellValue().trim(),
+                                cellIpAddress.getStringCellValue().trim(),
+                                cellType.getStringCellValue().trim(),
+                                cellCamPort.getStringCellValue().trim()
+                        );
+
+
+                        resultList.add(new CamStatus(serviceCamsTest.submit(new TaskTestCamera(camera, screensPath, contractor, currentEngineer)),
+                                cellDateNetStatus, cellNetStatus, cellEngineerNum, currentEngineer));
+
+                        if ((resultList.size() + 1) % camsPerEngineer == 0 && engineersCountPerDay <= (currentEngineer + 1)) {
+                            currentEngineer++;
                         }
                     } catch (Exception e) {
                         LOG.info(e.getMessage());
-                        camStatus.getCellNetStatus().setCellValue("Нет");
-                        camStatus.getCellNetStatus().getCellStyle().setFillForegroundColor(HSSFColor.RED.index);
-                        iterator.remove();
-                        camsTestedCount++;
-                        camsTestedTodayCount++;
-                    }
-                    finally
-                    {
-                        if (camsTestedTodayCount >= maxCamsPerDay)
-                        {
-                            isPaused = true;
-                            saveExcel(myExcelBook, sourcePath);
-                            while (LocalDateTime.now().isBefore(LocalDateTime.of(LocalDate.now().plusDays(1), startTime)))
-                            {
-                                Thread.sleep(1000);
-                            }
-                            camsTestedTodayCount = 0;
-                            isPaused = false;
-                        }
+                    } finally {
+                        currentRow++;
                     }
                 }
+
+                while (!resultList.isEmpty() && !isComplete()) {
+                    Iterator<CamStatus> iterator = resultList.iterator();
+                    while (iterator.hasNext() && !isComplete()) {
+                        CamStatus camStatus = iterator.next();
+                        try {
+                            if (camStatus.getTask().isDone()) {
+                                if (camStatus.getTask().get()) {
+                                    camStatus.getCellNetStatus().setCellValue("Да");
+                                    camStatus.getCellDateNetStatus().setCellValue(LocalDate.now().format(DateTimeUtil.DATE_FORMATTER));
+                                    camStatus.getCellEngineerNum().setCellValue(camStatus.getEngineerNum());
+                                    camStatus.getCellNetStatus().getCellStyle().setFillForegroundColor(HSSFColor.GREEN.index);
+                                } else {
+                                    camStatus.getCellNetStatus().setCellValue("Нет потока");
+                                    camStatus.getCellDateNetStatus().setCellValue(LocalDate.now().format(DateTimeUtil.DATE_FORMATTER));
+                                    camStatus.getCellEngineerNum().setCellValue(camStatus.getEngineerNum());
+                                    camStatus.getCellNetStatus().getCellStyle().setFillForegroundColor(HSSFColor.ORANGE.index);
+                                }
+                            }
+                        } catch (Exception e) {
+                            LOG.info(e.getMessage());
+                            camStatus.getCellNetStatus().setCellValue("Нет");
+                            camStatus.getCellDateNetStatus().setCellValue(LocalDate.now().format(DateTimeUtil.DATE_FORMATTER));
+                            camStatus.getCellEngineerNum().setCellValue(camStatus.getEngineerNum());
+                            camStatus.getCellNetStatus().getCellStyle().setFillForegroundColor(HSSFColor.RED.index);
+                        } finally {
+                            if (camStatus.getTask().isDone()) {
+                                iterator.remove();
+                                camsTestedCount++;
+                                camsTestedTodayCount++;
+                            }
+                            if (isMaxTestedPerDayLock() || isWorkTimeLock()) {
+                                saveExcel(myExcelBook, sourcePath);
+                                serviceCamsTest.shutdown();
+                                serviceMediaPlayer.shutdown();
+                                break;
+                            }
+                        }
+                    }
+                    if (isMaxTestedPerDayLock() || isWorkTimeLock()) {
+                        break;
+                    }
+                }
+
+
+                saveExcel(myExcelBook, sourcePath);
+                myExcelBook.close();
+            } catch (Exception e) {
+                LOG.info(e.getMessage());
             }
-
-
-            saveExcel(myExcelBook, sourcePath);
-            myExcelBook.close();
-        } catch (Exception e) {
-            LOG.info(e.getMessage());
         }
+    }
 
-        complete = true;
-        serviceCamsTest.shutdown();
-        serviceMediaPlayer.shutdown();
+    public boolean isWorkTimeLock()
+    {
+        return LocalTime.now().isBefore(startTime) || LocalTime.now().isAfter(endTime);
+    }
+
+    public boolean isMaxTestedPerDayLock()
+    {
+        return camsTestedTodayCount >= maxCamsPerDay && LocalDateTime.now().isBefore(LocalDateTime.of(LocalDate.now().plusDays(1), startTime));
     }
 
     private void saveExcel(HSSFWorkbook excelBook, String sourcePath)
@@ -195,13 +243,6 @@ public class CameraChecker {
         return camsTestedCount;
     }
 
-    public static boolean isPaused() {
-        return isPaused;
-    }
-
-    public static void setIsPaused(boolean isPaused) {
-        CameraChecker.isPaused = isPaused;
-    }
 }
 
             /*

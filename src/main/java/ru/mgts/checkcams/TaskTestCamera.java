@@ -31,23 +31,19 @@ public class TaskTestCamera implements Callable<Boolean> {
     protected static final Logger LOG = LoggerFactory.getLogger(CControl.class);
     private Camera camera;
     private String screensPath;
-    private LocalTime startTime;
-    private LocalTime endTime;
+    private String contractor;
+    private int currentEngineer;
 
-    public TaskTestCamera(Camera camera, String screensPath, LocalTime startTime, LocalTime endTime) {
+    public TaskTestCamera(Camera camera, String screensPath, String contractor, int currentEngineer) {
         this.camera = camera;
         this.screensPath = screensPath;
-        this.startTime = startTime;
-        this.endTime = endTime;
+        this.contractor = contractor;
+        this.currentEngineer = currentEngineer;
     }
 
     @Override
     public Boolean call() throws Exception {
         Thread.currentThread().setName("Thread test for camera: " + camera.getName() + " with ip " + camera.getIpAddress());
-        while (LocalTime.now().isBefore(startTime) || LocalTime.now().isAfter(endTime) || CameraChecker.isPaused())
-        {
-            Thread.sleep(1000);
-        }
 
         MediaPlayer mediaPlayer = initMediaPlayer();
 
@@ -74,7 +70,8 @@ public class TaskTestCamera implements Callable<Boolean> {
             screenNameMask =
                     screensPath +
                             "/" + getNowDate() +
-                            "/" +                 //сюда вписать папку Номер инженера
+                            "/" + contractor +
+                            "/" + currentEngineer +
                             "/" + rtspData.getFolderName() +
                             "/" + camera.getName() + "_IP" + camera.getIpAddress() + ".png";
         } else {
@@ -92,7 +89,8 @@ public class TaskTestCamera implements Callable<Boolean> {
             screenNameMask =
                     screensPath +
                             "/" + getNowDate() +
-                            "/" +                    //сюда вписать паку Номер инженера
+                            "/" + contractor +
+                            "/" + currentEngineer +
                             "/" + rtspData.getFolderName() +
                             "/" + camera.getName() +"_IP" + camera.getIpAddress() +
                             "/" + camera.getName() + ".png";
