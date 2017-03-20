@@ -6,6 +6,7 @@ import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
+import org.apache.poi.ss.usermodel.Cell;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.mgts.checkcams.model.CamStatus;
@@ -128,10 +129,15 @@ public class CameraChecker {
                             break;
                         }
 
-                        cellNetStatus = row.createCell(netStatusCellNumber); // netStatus
-                        if (cellNetStatus.getStringCellValue().trim().equals("Да"))
+                         // netStatus
+                        cellNetStatus = row.getCell(netStatusCellNumber);
+                        if (cellNetStatus != null && cellNetStatus.getCellType() != Cell.CELL_TYPE_BLANK &&
+                                cellNetStatus.getStringCellValue().trim().equals("Да"))
                         {
                             continue;
+                        }
+                        else {
+                            cellNetStatus = row.createCell(netStatusCellNumber);
                         }
 
                         cellContractor = row.getCell(36); // contractor
