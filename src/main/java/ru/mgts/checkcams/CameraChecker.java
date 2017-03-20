@@ -109,7 +109,7 @@ public class CameraChecker {
                 int currentRow = 2;
                 List<CamStatus> resultList = new ArrayList<>();
                 int currentEngineer = 1;
-                while (nameExists && !isComplete() && resultList.size() <= maxCamsPerDay) {
+                while (nameExists && !isComplete() && resultList.size() < maxCamsPerDay) {
                     HSSFCell cellDateNetStatus = null;
                     HSSFCell cellNetStatus = null;
                     HSSFCell cellEngineerNum = null;
@@ -149,7 +149,7 @@ public class CameraChecker {
                         resultList.add(new CamStatus(serviceCamsTest.submit(new TaskTestCamera(camera, screensPath, contractor, currentEngineer)),
                                 cellDateNetStatus, cellNetStatus, cellEngineerNum, currentEngineer));
 
-                        if ((resultList.size() + 1) % camsPerEngineer == 0 && engineersCountPerDay <= (currentEngineer + 1)) {
+                        if ((resultList.size()) % camsPerEngineer == 0 && currentEngineer <= engineersCountPerDay) {
                             currentEngineer++;
                         }
                     } catch (Exception e) {
