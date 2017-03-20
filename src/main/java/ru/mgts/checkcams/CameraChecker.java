@@ -219,7 +219,7 @@ public class CameraChecker {
 
     public boolean isMaxTestedPerDayLock()
     {
-        return camsTestedTodayCount >= maxCamsPerDay && LocalDateTime.now().isBefore(LocalDateTime.of(currentTestDateTime.toLocalDate().plusDays(1), startTime));
+        return  currentTestDateTime != null && camsTestedTodayCount >= maxCamsPerDay && LocalDateTime.now().isBefore(LocalDateTime.of(currentTestDateTime.toLocalDate().plusDays(1), startTime));
     }
 
     public boolean isPassedListAtThisDayLock()
