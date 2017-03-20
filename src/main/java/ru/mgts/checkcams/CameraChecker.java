@@ -80,10 +80,16 @@ public class CameraChecker {
 
     public void startCameraIterator() {
         while (!isComplete()) {
-            try (InputStream inputStream = new FileInputStream(sourcePath)) {
+            try {
                 while ((isMaxTestedPerDayLock() || isWorkTimeLock() || isPassedListAtThisDayLock()) && !isComplete()) {
                     Thread.sleep(1000);
                 }
+            }
+            catch (InterruptedException e)
+            {
+                LOG.info(e.getMessage());
+            }
+            try (InputStream inputStream = new FileInputStream(sourcePath)) {
 
                 //saveScreen("rtsp://admin:admin@10.209.246.42:554/channel1", "C:\\screens\\test.png", mediaPlayer);
                 //saveScreen("file:///C:\\Szamar Madar.avi", "C:\\screens\\test.png", mediaPlayer);
