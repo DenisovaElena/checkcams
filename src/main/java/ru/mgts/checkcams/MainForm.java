@@ -93,7 +93,7 @@ public class MainForm extends JFrame{
                     }
                     if (engineersCountPerDay <= 0)
                     {
-                        showMessageDialog(null, "Количество инженеров не должно быть больше нуля");
+                        showMessageDialog(null, "Количество инженеров должно быть больше нуля");
                     }
 
                     if (engineersCountPerDay > maxCamsPerDay)
@@ -137,6 +137,14 @@ public class MainForm extends JFrame{
                                     textAreaLog.append("Опрос приостановлен поскольку достигнут лимит опроса в день\n");
                                     labelCamsTestedCounter.setText(cameraChecker.getCamsTestedCount() + "");
                                     while (cameraChecker.isMaxTestedPerDayLock() && !cameraChecker.isComplete()) {
+                                    }
+                                    textAreaLog.append("Опрос возобновлен\n");
+                                }
+
+                                if (cameraChecker.isPassedListAtThisDayLock()) {
+                                    textAreaLog.append("Опрос на сегодня приостановлен, поскольку пройдены все камеры\n");
+                                    labelCamsTestedCounter.setText(cameraChecker.getCamsTestedCount() + "");
+                                    while (cameraChecker.isPassedListAtThisDayLock() && !cameraChecker.isComplete()) {
                                     }
                                     textAreaLog.append("Опрос возобновлен\n");
                                 }

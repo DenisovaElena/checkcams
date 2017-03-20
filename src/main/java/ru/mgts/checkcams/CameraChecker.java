@@ -44,6 +44,7 @@ public class CameraChecker {
     private int maxCamsPerDay;
     private String contractor;
     private int engineersCountPerDay;
+    private LocalDateTime currentTestDateTime;
 
     protected static ExecutorService serviceMediaPlayer;
     protected static ExecutorService serviceCamsTest;
@@ -61,6 +62,7 @@ public class CameraChecker {
         this.maxCamsPerDay = maxCamsPerDay;
         this.contractor = contractor;
         this.engineersCountPerDay = engineersCountPerDay;
+        this.currentTestDateTime = null;
     }
 
     public void reset()
@@ -79,7 +81,7 @@ public class CameraChecker {
     public void startCameraIterator() {
         while (!isComplete()) {
             try (InputStream inputStream = new FileInputStream(sourcePath)) {
-                while ((isMaxTestedPerDayLock() || isWorkTimeLock()) && !isComplete()) {
+                while ((isMaxTestedPerDayLock() || isWorkTimeLock() || isPassedListAtThisDayLock()) && !isComplete()) {
                     Thread.sleep(1000);
                 }
 
@@ -88,6 +90,7 @@ public class CameraChecker {
                 //saveScreen("rtsp://localhost:5544/pusya", "C:\\screens\\test.png", mediaPlayer, 3);
 
                 reset();
+                currentTestDateTime = null;
                 camsTestedCount = 0;
                 camsTestedTodayCount = 0;
                 int camsPerEngineer = maxCamsPerDay / engineersCountPerDay;
@@ -205,6 +208,7 @@ public class CameraChecker {
             } catch (Exception e) {
                 LOG.info(e.getMessage());
             }
+            currentTestDateTime = LocalDateTime.now();
         }
     }
 
@@ -215,7 +219,12 @@ public class CameraChecker {
 
     public boolean isMaxTestedPerDayLock()
     {
-        return camsTestedTodayCount >= maxCamsPerDay && LocalDateTime.now().isBefore(LocalDateTime.of(LocalDate.now().plusDays(1), startTime));
+        return camsTestedTodayCount >= maxCamsPerDay && LocalDateTime.now().isBefore(LocalDateTime.of(currentTestDateTime.toLocalDate().plusDays(1), startTime));
+    }
+
+    public boolean isPassedListAtThisDayLock()
+    {
+        return currentTestDateTime != null && LocalDateTime.now().isBefore(LocalDateTime.of(currentTestDateTime.toLocalDate().plusDays(1), startTime));
     }
 
     private void saveExcel(HSSFWorkbook excelBook, String sourcePath)
