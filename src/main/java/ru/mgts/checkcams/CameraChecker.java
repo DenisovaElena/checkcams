@@ -75,7 +75,7 @@ public class CameraChecker {
                 .setNameFormat("camsTest-%d")
                 .build();
         serviceMediaPlayer = Executors.newFixedThreadPool(1, threadFactoryMediaPlayers);
-        serviceCamsTest = Executors.newFixedThreadPool(10, threadFactoryCamsTest);
+        serviceCamsTest = Executors.newFixedThreadPool(5, threadFactoryCamsTest);
 
     }
 
