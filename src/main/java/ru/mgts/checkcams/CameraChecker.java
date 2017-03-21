@@ -81,15 +81,6 @@ public class CameraChecker {
 
     public void startCameraIterator() {
         while (!isComplete()) {
-            try {
-                while ((isMaxTestedPerDayLock() || isWorkTimeLock() || isPassedListAtThisDayLock()) && !isComplete()) {
-                    Thread.sleep(1000);
-                }
-            }
-            catch (InterruptedException e)
-            {
-                LOG.info(e.getMessage());
-            }
             try (InputStream inputStream = new FileInputStream(sourcePath)) {
 
                 //saveScreen("rtsp://admin:admin@10.209.246.42:554/channel1", "C:\\screens\\test.png", mediaPlayer);
@@ -164,7 +155,7 @@ public class CameraChecker {
                         resultList.add(new CamStatus(serviceCamsTest.submit(new TaskTestCamera(camera, screensPath, contractor, currentEngineer)),
                                 cellDateNetStatus, cellNetStatus, cellEngineerNum, currentEngineer));
 
-                        if ((resultList.size()) % camsPerEngineer == 0 && currentEngineer <= engineersCountPerDay) {
+                        if ((resultList.size()) % camsPerEngineer == 0 && currentEngineer < engineersCountPerDay) {
                             currentEngineer++;
                         }
                     } catch (Exception e) {
@@ -217,13 +208,24 @@ public class CameraChecker {
                     }
                 }
 
-
                 saveExcel(myExcelBook, sourcePath);
                 myExcelBook.close();
+                serviceMediaPlayer.shutdown();
+                serviceCamsTest.shutdown();
             } catch (Exception e) {
                 LOG.info(e.getMessage());
             }
-            currentTestDateTime = LocalDateTime.now();
+
+            try {
+                currentTestDateTime = LocalDateTime.now();
+                while ((isMaxTestedPerDayLock() || isWorkTimeLock() || isPassedListAtThisDayLock()) && !isComplete()) {
+                    Thread.sleep(1000);
+                }
+            }
+            catch (InterruptedException e)
+            {
+                LOG.info(e.getMessage());
+            }
         }
     }
 

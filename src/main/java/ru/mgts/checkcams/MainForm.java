@@ -195,8 +195,7 @@ public class MainForm extends JFrame{
         });
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent e) {
-                serviceMediaPlayer.shutdown();
-                serviceCamsTest.shutdown();
+
             }
         });
     }
