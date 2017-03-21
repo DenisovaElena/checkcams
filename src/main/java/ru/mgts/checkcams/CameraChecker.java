@@ -89,10 +89,15 @@ public class CameraChecker {
 
                 reset();
                 currentTestDateTime = null;
+
                 camsTestedCount = 0;
                 camsTestedTodayCount = 0;
                 int camsPerEngineer = maxCamsPerDay / engineersCountPerDay;
                 int remainder = maxCamsPerDay % engineersCountPerDay;
+                int remainderCounter = remainder == 0 ? remainder : remainder - 1;
+                int remainderCompensator = 0;
+                int correctionUnit = remainder == 0 ? 0 : 1;
+
                 HSSFWorkbook myExcelBook = new HSSFWorkbook(inputStream);
                 HSSFSheet sheet = myExcelBook.getSheetAt(0);
                 int dateNetStatusCellNumber = 51;
@@ -155,9 +160,23 @@ public class CameraChecker {
                         resultList.add(new CamStatus(serviceCamsTest.submit(new TaskTestCamera(camera, screensPath, contractor, currentEngineer)),
                                 cellDateNetStatus, cellNetStatus, cellEngineerNum, currentEngineer));
 
-                        if ((resultList.size()) % camsPerEngineer == 0 && currentEngineer < engineersCountPerDay) {
+                        if ((resultList.size() - remainderCompensator) % (camsPerEngineer + correctionUnit) == 0 && currentEngineer < engineersCountPerDay) {
                             currentEngineer++;
+                            if (remainderCounter != 0)
+                            {
+                                remainderCounter--;
+                                correctionUnit = 1;
+                            }
+                            else
+                            {
+                                correctionUnit = 0;
+                                if (remainder != 0) {
+                                    remainderCompensator = remainder;
+                                }
+                            }
                         }
+
+
                     } catch (Exception e) {
                         LOG.info(e.getMessage());
                     } finally {
@@ -212,6 +231,10 @@ public class CameraChecker {
                 myExcelBook.close();
                 serviceMediaPlayer.shutdown();
                 serviceCamsTest.shutdown();
+                final boolean doneServiceMediaPlayer = serviceMediaPlayer.awaitTermination(1, TimeUnit.MINUTES);
+                LOG.debug("ACHTUNG! Is all threads for serviceMediaPlayer completed? {}", doneServiceMediaPlayer);
+                final boolean doneServiceCamsTest = serviceCamsTest.awaitTermination(1, TimeUnit.MINUTES);
+                LOG.debug("ACHTUNG! Is all threads for serviceCamsTest completed? {}", doneServiceCamsTest);
             } catch (Exception e) {
                 LOG.info(e.getMessage());
             }

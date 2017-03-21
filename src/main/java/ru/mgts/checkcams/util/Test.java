@@ -13,10 +13,12 @@ public class Test {
         int engineersCountPerDay = 6;
         int camsPerEngineer = maxCamsPerDay / engineersCountPerDay;
         int remainder = maxCamsPerDay % engineersCountPerDay;
+        int remainderCounter = remainder == 0 ? remainder : remainder - 1;
+        int remainderCompensator = 0;
 
         int currentEngineer = 1;
         Map<Integer, Integer> engineerList = new HashMap<>();
-        int addRemainder = remainder == 0 ? 0 : 1;
+        int correctionUnit = remainder == 0 ? 0 : 1;
         for (int i = 0; i < maxCamsPerDay; i++)
         {
             if (engineerList.containsKey(currentEngineer))
@@ -28,16 +30,19 @@ public class Test {
                 engineerList.put(currentEngineer, 1);
             }
 
-            if ((i + 1) % (camsPerEngineer + addRemainder) == 0 && currentEngineer < engineersCountPerDay) {
+            if ((i + 1 - remainderCompensator) % (camsPerEngineer + correctionUnit) == 0 && currentEngineer < engineersCountPerDay) {
                 currentEngineer++;
-                if (remainder !=0)
+                if (remainderCounter != 0)
                 {
-                    remainder--;
-                    addRemainder = 1;
+                    remainderCounter--;
+                    correctionUnit = 1;
                 }
                 else
                 {
-                    addRemainder = 0;
+                    correctionUnit = 0;
+                    if (remainder != 0) {
+                        remainderCompensator = remainder;
+                    }
                 }
             }
         }
