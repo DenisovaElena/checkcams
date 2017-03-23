@@ -17,7 +17,7 @@ import static ru.mgts.checkcams.CameraChecker.serviceCamsTest;
 import static ru.mgts.checkcams.CameraChecker.serviceMediaPlayer;
 
 /**
- * Created by MakhrovSS on 15.03.2017.
+ * Created by Dummy on 15.03.2017.
  */
 public class MainForm extends JFrame{
 

@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.concurrent.*;
 
 /**
- * Created by MakhrovSS on 15.03.2017.
+ * Created by Dummy on 15.03.2017.
  */
 public class CameraChecker {
 
@@ -103,11 +103,18 @@ public class CameraChecker {
                 int dateNetStatusCellNumber = 51;
                 int netStatusCellNumber = 52;
                 int engineerNumCellNumber = 53;
-                int resultCellNumber = 54;
+                int problemCellNumber= 54;
+                int resultCellNumber = 55;
+                int contractorDoCellNumber = 56;
+                int contractorDateCellNumber = 57;
+
                 sheet.getRow(1).createCell(dateNetStatusCellNumber).setCellValue("Дата опроса");
                 sheet.getRow(1).createCell(netStatusCellNumber).setCellValue("Скрин-да/нет");
                 sheet.getRow(1).createCell(engineerNumCellNumber).setCellValue("Номер инженера");
-                sheet.getRow(1).createCell(resultCellNumber).setCellValue("Результат");
+                sheet.getRow(1).createCell(resultCellNumber).setCellValue("Заявка");
+                sheet.getRow(1).createCell(problemCellNumber).setCellValue("Загрязнение");
+                sheet.getRow(1).createCell(contractorDoCellNumber).setCellValue("Подрядчик исправил?");
+                sheet.getRow(1).createCell(contractorDateCellNumber).setCellValue("Дата выезда подрядчика");
                 boolean nameExists = true;
                 int currentRow = 2;
                 List<CamStatus> resultList = new ArrayList<>();
