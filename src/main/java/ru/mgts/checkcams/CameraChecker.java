@@ -93,7 +93,7 @@ public class CameraChecker {
                 break;
 
             case Cell.CELL_TYPE_NUMERIC:
-                    cellValue = Double.toString(cell.getNumericCellValue());
+                    cellValue = Integer.toString((int)cell.getNumericCellValue());
                 break;
 
             case Cell.CELL_TYPE_BLANK:
