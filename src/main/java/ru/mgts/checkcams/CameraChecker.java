@@ -79,6 +79,34 @@ public class CameraChecker {
 
     }
 
+    public String getStringCellVal(HSSFCell cell)
+    {
+        String cellValue = null;
+
+        switch (cell.getCellType()) {
+            case Cell.CELL_TYPE_STRING:
+                cellValue = cell.getStringCellValue();
+                break;
+
+            case Cell.CELL_TYPE_FORMULA:
+                cellValue = cell.getCellFormula();
+                break;
+
+            case Cell.CELL_TYPE_NUMERIC:
+                    cellValue = Double.toString(cell.getNumericCellValue());
+                break;
+
+            case Cell.CELL_TYPE_BLANK:
+                cellValue = "";
+                break;
+
+            case Cell.CELL_TYPE_BOOLEAN:
+                cellValue = Boolean.toString(cell.getBooleanCellValue());
+                break;
+        }
+        return cellValue.trim();
+    }
+
     public void startCameraIterator() {
         while (!isComplete()) {
             try (InputStream inputStream = new FileInputStream(sourcePath)) {
@@ -147,7 +175,7 @@ public class CameraChecker {
                         }
 
                         cellContractor = row.getCell(36); // contractor
-                        if (!contractor.equals("") && !cellContractor.getStringCellValue().equals(contractor)) {
+                        if (!contractor.equals("") && !getStringCellVal(cellContractor).equals(contractor)) {
                             continue;
                         }
                         HSSFCell cellName = row.getCell(2); // name
@@ -157,10 +185,10 @@ public class CameraChecker {
                         cellDateNetStatus = row.createCell(dateNetStatusCellNumber); // dateNetStatus
                         cellEngineerNum = row.createCell(engineerNumCellNumber); // engineerNum
 
-                        Camera camera = new Camera(cellName.getStringCellValue().trim(),
-                                cellIpAddress.getStringCellValue().trim(),
-                                cellType.getStringCellValue().trim(),
-                                cellCamPort.getStringCellValue().trim()
+                        Camera camera = new Camera(getStringCellVal(cellName),
+                                getStringCellVal(cellIpAddress),
+                                getStringCellVal(cellType),
+                                getStringCellVal(cellCamPort)
                         );
 
 
