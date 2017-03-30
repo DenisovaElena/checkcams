@@ -92,8 +92,7 @@ public class TaskTestCamera implements Callable<Boolean> {
                             "/" + contractor +
                             "/" + currentEngineer +
                             "/" + rtspData.getFolderName() +
-                            "/" + camera.getName() +"_IP" + camera.getIpAddress() +
-                            "/" + camera.getName() + ".png";
+                            "/" + camera.getName() +"_IP" + camera.getIpAddress() + ".png";
         }
 
         return saveScreen(rtspAddress, screenNameMask, mediaPlayer, 5);
@@ -118,7 +117,7 @@ public class TaskTestCamera implements Callable<Boolean> {
 
             Runnable taskPlay = () -> { Thread.currentThread().setName("Thread vlc for: " + rtspAddress); mediaPlayer.playMedia(rtspAddress); };
             Future task =serviceMediaPlayer.submit(taskPlay);
-            Thread.sleep(50000);
+            Thread.sleep(60000);
             File file = new File(savePath);
             mediaPlayer.saveSnapshot(file);
             mediaPlayer.stop();
