@@ -20,7 +20,7 @@
         </encoder>
     </appender>
 
-    <logger name="ru.mgts.checkcams" level="info"/>
+    <logger name="ru.mgts.checkcams" level="debug"/>
     <!--<logger name="org.springframework.web" level="DEBUG"/>-->
 
 
