@@ -264,12 +264,12 @@ public class CameraChecker {
 
                 saveExcel(myExcelBook, sourcePath);
                 myExcelBook.close();
-                serviceMediaPlayer.shutdown();
                 serviceCamsTest.shutdown();
-                final boolean doneServiceMediaPlayer = serviceMediaPlayer.awaitTermination(1, TimeUnit.MINUTES);
-                LOG.debug("ACHTUNG! Is all threads for serviceMediaPlayer completed? {}", doneServiceMediaPlayer);
+                serviceMediaPlayer.shutdown();
                 final boolean doneServiceCamsTest = serviceCamsTest.awaitTermination(1, TimeUnit.MINUTES);
                 LOG.debug("ACHTUNG! Is all threads for serviceCamsTest completed? {}", doneServiceCamsTest);
+                final boolean doneServiceMediaPlayer = serviceMediaPlayer.awaitTermination(1, TimeUnit.MINUTES);
+                LOG.debug("ACHTUNG! Is all threads for serviceMediaPlayer completed? {}", doneServiceMediaPlayer);
             } catch (Exception e) {
                 LOG.info(e.getMessage());
             }
