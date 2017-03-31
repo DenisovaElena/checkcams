@@ -43,6 +43,7 @@ public class MainForm extends JFrame{
     private JComboBox comboBoxContractor;
     private JSpinner spinnerEngineersCount;
     private JLabel labelEngineersCount;
+    private JButton buttonRecalcNums;
 
     public MainForm()
     {
@@ -59,7 +60,7 @@ public class MainForm extends JFrame{
         pack();
         setTitle("Опрос камер");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(800, 400);
+        setSize(850, 400);
         setResizable(false);
         setLocationRelativeTo(null);
         setVisible(true);
@@ -102,6 +103,7 @@ public class MainForm extends JFrame{
                     }
 
                     buttonStartChecker.setEnabled(false);
+                    buttonRecalcNums.setEnabled(false);
                     cameraChecker.init(
                             sourcePath,
                             screensPath,
@@ -157,6 +159,7 @@ public class MainForm extends JFrame{
                                 e.printStackTrace();
                             }
                             buttonStartChecker.setEnabled(true);
+                            buttonRecalcNums.setEnabled(true);
                         }
                     };
 
@@ -196,6 +199,31 @@ public class MainForm extends JFrame{
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent e) {
 
+            }
+        });
+        buttonRecalcNums.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String sourcePath = textSourcePath.getText().trim();
+                int maxCamsPerDay = (Integer) spinnerCamsCount.getValue();
+                int engineersCountPerDay = (Integer) spinnerEngineersCount.getValue();
+                String contractor = String.valueOf(comboBoxContractor.getSelectedItem());
+                if (!(new File(sourcePath).exists()))
+                {
+                    showMessageDialog(null, "Не удается найти исходный файл");
+                }
+                if (engineersCountPerDay <= 0)
+                {
+                    showMessageDialog(null, "Количество инженеров должно быть больше нуля");
+                }
+
+                if (engineersCountPerDay > maxCamsPerDay)
+                {
+                    showMessageDialog(null, "Количество инженеров не должно превышать количество камер");
+                }
+
+                cameraChecker.recalcNums(sourcePath, maxCamsPerDay, contractor, engineersCountPerDay);
+                textAreaLog.append("Инженеры перераспределены\n");
             }
         });
     }

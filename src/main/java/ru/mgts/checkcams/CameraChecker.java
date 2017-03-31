@@ -107,6 +107,85 @@ public class CameraChecker {
         return cellValue.trim();
     }
 
+    public void recalcNums(String sourcePath, int maxCamsPerDay, String contractor, int engineersCountPerDay)
+    {
+        this.sourcePath = sourcePath;
+        this.maxCamsPerDay = maxCamsPerDay;
+        this.contractor = contractor;
+        this.engineersCountPerDay = engineersCountPerDay;
+
+
+        try (InputStream inputStream = new FileInputStream(sourcePath)) {
+
+            int camsTestedCount = 0;
+            int camsPerEngineer = maxCamsPerDay / engineersCountPerDay;
+            int remainder = maxCamsPerDay % engineersCountPerDay;
+            int remainderCounter = remainder == 0 ? remainder : remainder - 1;
+            int remainderCompensator = 0;
+            int correctionUnit = remainder == 0 ? 0 : 1;
+
+            HSSFWorkbook myExcelBook = new HSSFWorkbook(inputStream);
+            HSSFSheet sheet = myExcelBook.getSheetAt(0);
+            int netStatusCellNumber = 52;
+            int engineerNumCellNumber = 53;
+
+            sheet.getRow(1).createCell(netStatusCellNumber).setCellValue("Скрин-да/нет");
+            sheet.getRow(1).createCell(engineerNumCellNumber).setCellValue("Номер инженера");
+            boolean screenStateExists = true;
+            int currentRow = 2;
+            int currentEngineer = 1;
+            while (screenStateExists && camsTestedCount < maxCamsPerDay) {
+                HSSFCell cellEngineerNum = null;
+                HSSFCell cellContractor = null;
+
+                try {
+                    HSSFRow row = sheet.getRow(currentRow);
+                    if (row == null || row.getCell(netStatusCellNumber) == null || row.getCell(netStatusCellNumber).toString().trim().equals(""))
+                    {
+                        screenStateExists = false;
+                        break;
+                    }
+
+                    cellContractor = row.getCell(36); // contractor
+                    if (!contractor.equals("") && !getStringCellVal(cellContractor).equals(contractor)) {
+                        continue;
+                    }
+                    camsTestedCount++;
+
+                    cellEngineerNum = row.createCell(engineerNumCellNumber); // engineerNum
+                    cellEngineerNum.setCellValue(currentEngineer);
+
+                    if ((camsTestedCount - remainderCompensator) % (camsPerEngineer + correctionUnit) == 0 && currentEngineer < engineersCountPerDay) {
+                        currentEngineer++;
+                        if (remainderCounter != 0)
+                        {
+                            remainderCounter--;
+                            correctionUnit = 1;
+                        }
+                        else
+                        {
+                            correctionUnit = 0;
+                            if (remainder != 0) {
+                                remainderCompensator = remainder;
+                            }
+                        }
+                    }
+
+
+                } catch (Exception e) {
+                    LOG.info(e.getMessage());
+                } finally {
+                    currentRow++;
+                }
+            }
+
+            saveExcel(myExcelBook, sourcePath);
+            myExcelBook.close();
+        } catch (Exception e) {
+            LOG.info(e.getMessage());
+        }
+    }
+
     public void startCameraIterator() {
         while (!isComplete()) {
             try (InputStream inputStream = new FileInputStream(sourcePath)) {
