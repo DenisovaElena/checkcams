@@ -34,7 +34,7 @@ public class CameraChecker {
 
     protected static final Logger LOG = LoggerFactory.getLogger(CControl.class);
 
-    private volatile boolean complete;
+    private volatile static boolean complete;
     private int camsTestedCount;
     private int camsTestedTodayCount;
 
@@ -47,7 +47,6 @@ public class CameraChecker {
     private int engineersCountPerDay;
     private LocalDateTime currentTestDateTime;
 
-    protected static ExecutorService serviceMediaPlayer;
     protected static ExecutorService serviceCamsTest;
     public static Map<String, RTSPdata> rtspDataList = Configurator.loadConfigsRTSP();
 
@@ -68,13 +67,9 @@ public class CameraChecker {
 
     public void reset()
     {
-        ThreadFactory threadFactoryMediaPlayers = new ThreadFactoryBuilder()
-                .setNameFormat("mediaPlayers-%d")
-                .build();
         ThreadFactory threadFactoryCamsTest = new ThreadFactoryBuilder()
                 .setNameFormat("camsTest-%d")
                 .build();
-        serviceMediaPlayer = Executors.newFixedThreadPool(1, threadFactoryMediaPlayers);
         serviceCamsTest = Executors.newFixedThreadPool(5, threadFactoryCamsTest);
 
     }
@@ -328,7 +323,6 @@ public class CameraChecker {
                             if (isMaxTestedPerDayLock() || isWorkTimeLock()) {
                                 saveExcel(myExcelBook, sourcePath);
                                 serviceCamsTest.shutdown();
-                                serviceMediaPlayer.shutdown();
                                 break;
                             }
                         }
@@ -341,11 +335,8 @@ public class CameraChecker {
                 saveExcel(myExcelBook, sourcePath);
                 myExcelBook.close();
                 serviceCamsTest.shutdown();
-                serviceMediaPlayer.shutdown();
-                final boolean doneServiceCamsTest = serviceCamsTest.awaitTermination(1, TimeUnit.MINUTES);
+                final boolean doneServiceCamsTest = serviceCamsTest.awaitTermination(5, TimeUnit.SECONDS);
                 LOG.debug("ACHTUNG! Is all threads for serviceCamsTest completed? {}", doneServiceCamsTest);
-                final boolean doneServiceMediaPlayer = serviceMediaPlayer.awaitTermination(1, TimeUnit.MINUTES);
-                LOG.debug("ACHTUNG! Is all threads for serviceMediaPlayer completed? {}", doneServiceMediaPlayer);
             } catch (Exception e) {
                 LOG.info(e.getMessage());
             }
@@ -391,12 +382,12 @@ public class CameraChecker {
         }
     }
 
-    public boolean isComplete() {
+    public static boolean isComplete() {
         return complete;
     }
 
-    public void setComplete(boolean complete) {
-        this.complete = complete;
+    public static void setComplete(boolean complete) {
+        CameraChecker.complete = complete;
     }
 
     public int getCamsTestedCount() {

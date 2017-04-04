@@ -15,13 +15,9 @@ import uk.co.caprica.vlcj.runtime.RuntimeUtil;
 
 import java.io.File;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 
 import static ru.mgts.checkcams.CameraChecker.rtspDataList;
-import static ru.mgts.checkcams.CameraChecker.serviceMediaPlayer;
 
 /**
  * Created by Administrator on 16.03.2017.
@@ -44,6 +40,8 @@ public class TaskTestCamera implements Callable<Boolean> {
     @Override
     public Boolean call() throws Exception {
         Thread.currentThread().setName("Thread test for camera: " + camera.getName() + " with ip " + camera.getIpAddress());
+        if (CameraChecker.isComplete())
+            return false;
 
         MediaPlayer mediaPlayer = initMediaPlayer();
 
@@ -115,16 +113,19 @@ public class TaskTestCamera implements Callable<Boolean> {
         try {
             LOG.debug("ACHTUNG! Starting vlc for stream " + rtspAddress);
 
-            Runnable taskPlay = () -> { Thread.currentThread().setName("Thread vlc for: " + rtspAddress); mediaPlayer.playMedia(rtspAddress); };
-            Future task =serviceMediaPlayer.submit(taskPlay);
+            Thread threadPlay = new Thread()
+            {
+                @Override
+                public void run() {
+                    mediaPlayer.playMedia(rtspAddress);
+                }
+            };
+            threadPlay.start();
             Thread.sleep(50000);
             File file = new File(savePath);
             mediaPlayer.saveSnapshot(file);
             mediaPlayer.stop();
-            while (!task.isDone())
-            {
-                Thread.sleep(1);
-            }
+            threadPlay.join();
         }
         catch (Exception e)
         {

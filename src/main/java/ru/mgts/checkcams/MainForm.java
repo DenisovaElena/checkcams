@@ -13,8 +13,6 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 import static javax.swing.JOptionPane.showMessageDialog;
-import static ru.mgts.checkcams.CameraChecker.serviceCamsTest;
-import static ru.mgts.checkcams.CameraChecker.serviceMediaPlayer;
 
 /**
  * Created by Dummy on 15.03.2017.
