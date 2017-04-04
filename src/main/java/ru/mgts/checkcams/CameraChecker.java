@@ -147,7 +147,7 @@ public class CameraChecker {
                     }
 
                     cellRegion = row.getCell(6); // region
-                    if (!region.equals("") && !getStringCellVal(cellRegion).equals(region)) {
+                    if (!region.startsWith("") && !getStringCellVal(cellRegion).startsWith(region)) {
                         continue;
                     }
                     camsTestedCount++;
@@ -251,7 +251,7 @@ public class CameraChecker {
                         }
 
                         cellRegion = row.getCell(6); // region
-                        if (!region.equals("") && !getStringCellVal(cellRegion).equals(region)) {
+                        if (!region.startsWith("") && !getStringCellVal(cellRegion).startsWith(region)) {
                             continue;
                         }
                         HSSFCell cellName = row.getCell(2); // name
