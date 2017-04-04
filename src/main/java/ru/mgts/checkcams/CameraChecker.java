@@ -43,7 +43,7 @@ public class CameraChecker {
     private LocalTime startTime;
     private LocalTime endTime;
     private int maxCamsPerDay;
-    private String contractor;
+    private String region;
     private int engineersCountPerDay;
     private LocalDateTime currentTestDateTime;
 
@@ -54,14 +54,14 @@ public class CameraChecker {
     public CameraChecker() {
     }
 
-    public void init(String sourcePath, String screensPath, LocalTime startTime, LocalTime endTime, int maxCamsPerDay, String contractor, int engineersCountPerDay)
+    public void init(String sourcePath, String screensPath, LocalTime startTime, LocalTime endTime, int maxCamsPerDay, String region, int engineersCountPerDay)
     {
         this.sourcePath = sourcePath;
         this.screensPath = screensPath;
         this.startTime = startTime;
         this.endTime = endTime;
         this.maxCamsPerDay = maxCamsPerDay;
-        this.contractor = contractor;
+        this.region = region;
         this.engineersCountPerDay = engineersCountPerDay;
         this.currentTestDateTime = null;
     }
@@ -107,11 +107,11 @@ public class CameraChecker {
         return cellValue.trim();
     }
 
-    public void recalcNums(String sourcePath, int maxCamsPerDay, String contractor, int engineersCountPerDay)
+    public void recalcNums(String sourcePath, int maxCamsPerDay, String region, int engineersCountPerDay)
     {
         this.sourcePath = sourcePath;
         this.maxCamsPerDay = maxCamsPerDay;
-        this.contractor = contractor;
+        this.region = region;
         this.engineersCountPerDay = engineersCountPerDay;
 
 
@@ -136,7 +136,7 @@ public class CameraChecker {
             int currentEngineer = 1;
             while (screenStateExists && camsTestedCount < maxCamsPerDay) {
                 HSSFCell cellEngineerNum = null;
-                HSSFCell cellContractor = null;
+                HSSFCell cellRegion = null;
 
                 try {
                     HSSFRow row = sheet.getRow(currentRow);
@@ -146,8 +146,8 @@ public class CameraChecker {
                         break;
                     }
 
-                    cellContractor = row.getCell(36); // contractor
-                    if (!contractor.equals("") && !getStringCellVal(cellContractor).equals(contractor)) {
+                    cellRegion = row.getCell(6); // region
+                    if (!region.equals("") && !getStringCellVal(cellRegion).equals(region)) {
                         continue;
                     }
                     camsTestedCount++;
@@ -212,16 +212,13 @@ public class CameraChecker {
                 int engineerNumCellNumber = 53;
                 int problemCellNumber= 54;
                 int resultCellNumber = 55;
-                int contractorDoCellNumber = 56;
-                int contractorDateCellNumber = 57;
 
                 sheet.getRow(1).createCell(dateNetStatusCellNumber).setCellValue("Дата опроса");
                 sheet.getRow(1).createCell(netStatusCellNumber).setCellValue("Скрин-да/нет");
                 sheet.getRow(1).createCell(engineerNumCellNumber).setCellValue("Номер инженера");
                 sheet.getRow(1).createCell(resultCellNumber).setCellValue("Заявка");
                 sheet.getRow(1).createCell(problemCellNumber).setCellValue("Загрязнение");
-                sheet.getRow(1).createCell(contractorDoCellNumber).setCellValue("Подрядчик исправил?");
-                sheet.getRow(1).createCell(contractorDateCellNumber).setCellValue("Дата выезда подрядчика");
+
                 boolean nameExists = true;
                 int currentRow = 2;
                 List<CamStatus> resultList = new ArrayList<>();
@@ -230,7 +227,7 @@ public class CameraChecker {
                     HSSFCell cellDateNetStatus = null;
                     HSSFCell cellNetStatus = null;
                     HSSFCell cellEngineerNum = null;
-                    HSSFCell cellContractor = null;
+                    HSSFCell cellRegion = null;
 
                     try {
                         HSSFRow row = sheet.getRow(currentRow);
@@ -253,8 +250,8 @@ public class CameraChecker {
                             cellNetStatus = row.createCell(netStatusCellNumber);
                         }
 
-                        cellContractor = row.getCell(36); // contractor
-                        if (!contractor.equals("") && !getStringCellVal(cellContractor).equals(contractor)) {
+                        cellRegion = row.getCell(6); // region
+                        if (!region.equals("") && !getStringCellVal(cellRegion).equals(region)) {
                             continue;
                         }
                         HSSFCell cellName = row.getCell(2); // name
@@ -271,7 +268,7 @@ public class CameraChecker {
                         );
 
 
-                        resultList.add(new CamStatus(serviceCamsTest.submit(new TaskTestCamera(camera, screensPath, contractor, currentEngineer)),
+                        resultList.add(new CamStatus(serviceCamsTest.submit(new TaskTestCamera(camera, screensPath, region, currentEngineer)),
                                 cellDateNetStatus, cellNetStatus, cellEngineerNum, currentEngineer));
 
                         if ((resultList.size() - remainderCompensator) % (camsPerEngineer + correctionUnit) == 0 && currentEngineer < engineersCountPerDay) {

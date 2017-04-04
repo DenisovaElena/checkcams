@@ -31,13 +31,13 @@ public class TaskTestCamera implements Callable<Boolean> {
     protected static final Logger LOG = LoggerFactory.getLogger(CControl.class);
     private Camera camera;
     private String screensPath;
-    private String contractor;
+    private String region;
     private int currentEngineer;
 
-    public TaskTestCamera(Camera camera, String screensPath, String contractor, int currentEngineer) {
+    public TaskTestCamera(Camera camera, String screensPath, String region, int currentEngineer) {
         this.camera = camera;
         this.screensPath = screensPath;
-        this.contractor = contractor;
+        this.region = region;
         this.currentEngineer = currentEngineer;
     }
 
@@ -70,7 +70,7 @@ public class TaskTestCamera implements Callable<Boolean> {
             screenNameMask =
                     screensPath +
                             "/" + getNowDate() +
-                            "/" + contractor +
+                            "/" + region +
                             "/" + currentEngineer +
                             "/" + rtspData.getFolderName() +
                             "/" + camera.getName() + "_IP" + camera.getIpAddress() + ".png";
@@ -89,7 +89,7 @@ public class TaskTestCamera implements Callable<Boolean> {
             screenNameMask =
                     screensPath +
                             "/" + getNowDate() +
-                            "/" + contractor +
+                            "/" + region +
                             "/" + currentEngineer +
                             "/" + rtspData.getFolderName() +
                             "/" + camera.getName() +"_IP" + camera.getIpAddress() + ".png";
