@@ -50,9 +50,9 @@ public class Configurator
         return rtspDataList;
     }
 
-    public static List<String> loadConfigsContractor()
+    public static List<String> loadConfigsRegion()
     {
-        List<String> contractorsList = new ArrayList<String>();
+        List<String> regionsList = new ArrayList<String>();
 
         Properties prop = new Properties();
 
@@ -65,9 +65,9 @@ public class Configurator
 
             for (int i = 0; i < count; i++)
             {
-                if (prop.getProperty("orgName" + i) == null)
+                if (prop.getProperty("regName" + i) == null)
                     continue;
-                contractorsList.add(prop.getProperty("orgName" + i));
+                regionsList.add(prop.getProperty("regName" + i));
             }
 
         }
@@ -75,6 +75,6 @@ public class Configurator
         {
             e.printStackTrace();
         }
-        return contractorsList;
+        return regionsList;
     }
 }
