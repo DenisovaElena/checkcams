@@ -59,7 +59,7 @@ public class Configurator
         try
         {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            prop.load(new InputStreamReader(classLoader.getResourceAsStream("contractor.properties"), "UTF-8"));
+            prop.load(new InputStreamReader(classLoader.getResourceAsStream("region.properties"), "UTF-8"));
 
             int count = Integer.parseInt(prop.getProperty("count"));
 
