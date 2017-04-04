@@ -229,7 +229,7 @@ public class MainForm extends JFrame{
     }
 
     private void createUIComponents() {
-        comboBoxContractor = new JComboBox(Configurator.loadConfigsContractor().toArray());
+        comboBoxContractor = new JComboBox(Configurator.loadConfigsRegion().toArray());
         comboBoxContractor.addItem("");
     }
 }
