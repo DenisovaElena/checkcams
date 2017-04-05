@@ -68,7 +68,7 @@ public class TaskTestCamera implements Callable<Boolean> {
             screenNameMask =
                     screensPath +
                             "/" + getNowDate() +
-                            "/" + region +
+                            "/ЦАО" + //region +
                             "/" + currentEngineer +
                             "/" + rtspData.getFolderName() +
                             "/" + camera.getName() + "_IP" + camera.getIpAddress() + ".png";
@@ -87,7 +87,7 @@ public class TaskTestCamera implements Callable<Boolean> {
             screenNameMask =
                     screensPath +
                             "/" + getNowDate() +
-                            "/" + region +
+                            "/ЦАО" + //region +
                             "/" + currentEngineer +
                             "/" + rtspData.getFolderName() +
                             "/" + camera.getName() +"_IP" + camera.getIpAddress() + ".png";
