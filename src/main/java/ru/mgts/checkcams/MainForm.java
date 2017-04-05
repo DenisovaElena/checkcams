@@ -37,8 +37,8 @@ public class MainForm extends JFrame{
     private JButton buttonEnd;
     private JLabel labelCamsCount;
     private JSpinner spinnerCamsCount;
-    private JLabel labelContractor;
-    private JComboBox comboBoxContractor;
+    private JLabel labelRegion;
+    private JComboBox comboBoxRegion;
     private JSpinner spinnerEngineersCount;
     private JLabel labelEngineersCount;
     private JButton buttonRecalcNums;
@@ -81,7 +81,7 @@ public class MainForm extends JFrame{
                     LocalTime endTimeTime = DateTimeUtil.parseLocalTime(textEndTime.getText());
                     int maxCamsPerDay = (Integer) spinnerCamsCount.getValue();
                     int engineersCountPerDay = (Integer) spinnerEngineersCount.getValue();
-                    String contractor = String.valueOf(comboBoxContractor.getSelectedItem());
+                    String region = String.valueOf(comboBoxRegion.getSelectedItem());
                     if (!(new File(sourcePath).exists()))
                     {
                         showMessageDialog(null, "Не удается найти исходный файл");
@@ -108,7 +108,7 @@ public class MainForm extends JFrame{
                             startTime,
                             endTimeTime,
                             maxCamsPerDay,
-                            contractor,
+                            region,
                             engineersCountPerDay
                     );
                     Thread checkerThread = new Thread() {
@@ -205,7 +205,7 @@ public class MainForm extends JFrame{
                 String sourcePath = textSourcePath.getText().trim();
                 int maxCamsPerDay = (Integer) spinnerCamsCount.getValue();
                 int engineersCountPerDay = (Integer) spinnerEngineersCount.getValue();
-                String contractor = String.valueOf(comboBoxContractor.getSelectedItem());
+                String region = String.valueOf(comboBoxRegion.getSelectedItem());
                 if (!(new File(sourcePath).exists()))
                 {
                     showMessageDialog(null, "Не удается найти исходный файл");
@@ -220,14 +220,14 @@ public class MainForm extends JFrame{
                     showMessageDialog(null, "Количество инженеров не должно превышать количество камер");
                 }
 
-                cameraChecker.recalcNums(sourcePath, maxCamsPerDay, contractor, engineersCountPerDay);
+                cameraChecker.recalcNums(sourcePath, maxCamsPerDay, region, engineersCountPerDay);
                 textAreaLog.append("Инженеры перераспределены\n");
             }
         });
     }
 
     private void createUIComponents() {
-        comboBoxContractor = new JComboBox(Configurator.loadConfigsRegion().toArray());
-        comboBoxContractor.addItem("");
+        comboBoxRegion = new JComboBox(Configurator.loadConfigsRegion().toArray());
+        comboBoxRegion.addItem("");
     }
 }
