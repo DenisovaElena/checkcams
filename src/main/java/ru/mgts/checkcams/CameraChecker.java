@@ -234,9 +234,9 @@ public class CameraChecker {
                          // netStatus
                         cellNetStatus = row.getCell(netStatusCellNumber);
                         if (
-                                cellNetStatus != null && cellNetStatus.getCellType() != Cell.CELL_TYPE_BLANK &&
-                                        (cellNetStatus.getStringCellValue().trim().equals("Да") ||
-                                cellNetStatus.getStringCellValue().trim().equals("Нет"))
+                                cellNetStatus != null && cellNetStatus.getCellType() != Cell.CELL_TYPE_BLANK //&&
+                                //        (cellNetStatus.getStringCellValue().trim().equals("Да") ||
+                                //cellNetStatus.getStringCellValue().trim().equals("Нет"))
                                 )
                         {
                             continue;
