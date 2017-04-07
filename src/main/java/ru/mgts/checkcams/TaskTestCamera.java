@@ -40,7 +40,7 @@ public class TaskTestCamera implements Callable<Boolean> {
     @Override
     public Boolean call() throws Exception {
         Thread.currentThread().setName("Thread test for camera: " + camera.getName() + " with ip " + camera.getIpAddress());
-        if (CameraChecker.isComplete())
+        if (CameraChecker.isMaxTestedPerDayLock() || CameraChecker.isWorkTimeLock() || CameraChecker.isPassedListAtThisDayLock() || CameraChecker.isComplete())
             return false;
 
         MediaPlayer mediaPlayer = initMediaPlayer();

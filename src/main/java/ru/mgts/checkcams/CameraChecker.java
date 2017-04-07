@@ -36,16 +36,16 @@ public class CameraChecker {
 
     private volatile static boolean complete;
     private int camsTestedCount;
-    private int camsTestedTodayCount;
+    private static int camsTestedTodayCount;
 
     private String sourcePath;
     private String screensPath;
-    private LocalTime startTime;
-    private LocalTime endTime;
-    private int maxCamsPerDay;
+    private static LocalTime startTime;
+    private static LocalTime endTime;
+    private static int maxCamsPerDay;
     private String region;
     private int engineersCountPerDay;
-    private LocalDateTime currentTestDateTime;
+    private static LocalDateTime currentTestDateTime;
 
     protected static ExecutorService serviceCamsTest;
     public static Map<String, RTSPdata> rtspDataList = Configurator.loadConfigsRTSP();
@@ -57,12 +57,12 @@ public class CameraChecker {
     {
         this.sourcePath = sourcePath;
         this.screensPath = screensPath;
-        this.startTime = startTime;
-        this.endTime = endTime;
-        this.maxCamsPerDay = maxCamsPerDay;
         this.region = region;
         this.engineersCountPerDay = engineersCountPerDay;
-        this.currentTestDateTime = null;
+        CameraChecker.startTime = startTime;
+        CameraChecker.endTime = endTime;
+        CameraChecker.maxCamsPerDay = maxCamsPerDay;
+        CameraChecker.currentTestDateTime = null;
     }
 
     public void reset()
@@ -105,7 +105,7 @@ public class CameraChecker {
     public void recalcNums(String sourcePath, int maxCamsPerDay, String region, int engineersCountPerDay)
     {
         this.sourcePath = sourcePath;
-        this.maxCamsPerDay = maxCamsPerDay;
+        CameraChecker.maxCamsPerDay = maxCamsPerDay;
         this.region = region;
         this.engineersCountPerDay = engineersCountPerDay;
 
@@ -322,7 +322,6 @@ public class CameraChecker {
                             }
                             if (isMaxTestedPerDayLock() || isWorkTimeLock()) {
                                 saveExcel(myExcelBook, sourcePath);
-                                serviceCamsTest.shutdown();
                                 break;
                             }
                         }
@@ -354,17 +353,17 @@ public class CameraChecker {
         }
     }
 
-    public boolean isWorkTimeLock()
+    public static boolean isWorkTimeLock()
     {
         return LocalTime.now().isBefore(startTime) || LocalTime.now().isAfter(endTime);
     }
 
-    public boolean isMaxTestedPerDayLock()
+    public static boolean isMaxTestedPerDayLock()
     {
         return  currentTestDateTime != null && camsTestedTodayCount >= maxCamsPerDay && LocalDateTime.now().isBefore(LocalDateTime.of(currentTestDateTime.toLocalDate().plusDays(1), startTime));
     }
 
-    public boolean isPassedListAtThisDayLock()
+    public static boolean isPassedListAtThisDayLock()
     {
         return currentTestDateTime != null && LocalDateTime.now().isBefore(LocalDateTime.of(currentTestDateTime.toLocalDate().plusDays(1), startTime));
     }
