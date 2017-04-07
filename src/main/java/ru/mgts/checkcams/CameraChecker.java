@@ -290,9 +290,9 @@ public class CameraChecker {
                     }
                 }
 
-                while (!resultList.isEmpty() && !isComplete()) {
+                while (!resultList.isEmpty() && !isComplete() && !isMaxTestedPerDayLock() && !isWorkTimeLock() && !isPassedListAtThisDayLock()) {
                     Iterator<CamStatus> iterator = resultList.iterator();
-                    while (iterator.hasNext() && !isComplete()) {
+                    while (iterator.hasNext() && !isComplete() && !isMaxTestedPerDayLock() && !isWorkTimeLock() && !isPassedListAtThisDayLock()) {
                         CamStatus camStatus = iterator.next();
                         try {
                             if (camStatus.getTask().isDone()) {
@@ -320,14 +320,7 @@ public class CameraChecker {
                                 camsTestedCount++;
                                 camsTestedTodayCount++;
                             }
-                            if (isMaxTestedPerDayLock() || isWorkTimeLock()) {
-                                saveExcel(myExcelBook, sourcePath);
-                                break;
-                            }
                         }
-                    }
-                    if (isMaxTestedPerDayLock() || isWorkTimeLock()) {
-                        break;
                     }
                 }
 
@@ -365,7 +358,7 @@ public class CameraChecker {
 
     public static boolean isPassedListAtThisDayLock()
     {
-        return currentTestDateTime != null && LocalDateTime.now().isBefore(LocalDateTime.of(currentTestDateTime.toLocalDate().plusDays(1), startTime));
+        return camsTestedTodayCount > 0 && currentTestDateTime != null && LocalDateTime.now().isBefore(LocalDateTime.of(currentTestDateTime.toLocalDate().plusDays(1), startTime));
     }
 
     private void saveExcel(HSSFWorkbook excelBook, String sourcePath)
