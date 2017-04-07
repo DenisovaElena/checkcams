@@ -34,18 +34,19 @@ public class CameraChecker {
 
     protected static final Logger LOG = LoggerFactory.getLogger(CControl.class);
 
-    private volatile static boolean complete;
+    private volatile boolean complete;
+    private static volatile boolean killThreads;
     private int camsTestedCount;
-    private static int camsTestedTodayCount;
+    private int camsTestedTodayCount;
 
     private String sourcePath;
     private String screensPath;
-    private static LocalTime startTime;
-    private static LocalTime endTime;
-    private static int maxCamsPerDay;
+    private LocalTime startTime;
+    private LocalTime endTime;
+    private int maxCamsPerDay;
     private String region;
     private int engineersCountPerDay;
-    private static LocalDateTime currentTestDateTime;
+    private LocalDateTime currentTestDateTime;
 
     protected static ExecutorService serviceCamsTest;
     public static Map<String, RTSPdata> rtspDataList = Configurator.loadConfigsRTSP();
@@ -59,10 +60,10 @@ public class CameraChecker {
         this.screensPath = screensPath;
         this.region = region;
         this.engineersCountPerDay = engineersCountPerDay;
-        CameraChecker.startTime = startTime;
-        CameraChecker.endTime = endTime;
-        CameraChecker.maxCamsPerDay = maxCamsPerDay;
-        CameraChecker.currentTestDateTime = null;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.maxCamsPerDay = maxCamsPerDay;
+        this.currentTestDateTime = null;
     }
 
     public void reset()
@@ -71,6 +72,7 @@ public class CameraChecker {
                 .setNameFormat("camsTest-%d")
                 .build();
         serviceCamsTest = Executors.newFixedThreadPool(5, threadFactoryCamsTest);
+        CameraChecker.killThreads = false;
 
     }
 
@@ -105,7 +107,7 @@ public class CameraChecker {
     public void recalcNums(String sourcePath, int maxCamsPerDay, String region, int engineersCountPerDay)
     {
         this.sourcePath = sourcePath;
-        CameraChecker.maxCamsPerDay = maxCamsPerDay;
+        this.maxCamsPerDay = maxCamsPerDay;
         this.region = region;
         this.engineersCountPerDay = engineersCountPerDay;
 
@@ -326,6 +328,8 @@ public class CameraChecker {
 
                 saveExcel(myExcelBook, sourcePath);
                 myExcelBook.close();
+
+                setKillThreads(true);
                 serviceCamsTest.shutdown();
                 final boolean doneServiceCamsTest = serviceCamsTest.awaitTermination(5, TimeUnit.SECONDS);
                 LOG.debug("ACHTUNG! Is all threads for serviceCamsTest completed? {}", doneServiceCamsTest);
@@ -346,17 +350,17 @@ public class CameraChecker {
         }
     }
 
-    public static boolean isWorkTimeLock()
+    public boolean isWorkTimeLock()
     {
         return LocalTime.now().isBefore(startTime) || LocalTime.now().isAfter(endTime);
     }
 
-    public static boolean isMaxTestedPerDayLock()
+    public boolean isMaxTestedPerDayLock()
     {
         return  currentTestDateTime != null && camsTestedTodayCount >= maxCamsPerDay && LocalDateTime.now().isBefore(LocalDateTime.of(currentTestDateTime.toLocalDate().plusDays(1), startTime));
     }
 
-    public static boolean isPassedListAtThisDayLock()
+    public boolean isPassedListAtThisDayLock()
     {
         return camsTestedTodayCount > 0 && currentTestDateTime != null && LocalDateTime.now().isBefore(LocalDateTime.of(currentTestDateTime.toLocalDate().plusDays(1), startTime));
     }
@@ -374,12 +378,20 @@ public class CameraChecker {
         }
     }
 
-    public static boolean isComplete() {
+    public boolean isComplete() {
         return complete;
     }
 
-    public static void setComplete(boolean complete) {
-        CameraChecker.complete = complete;
+    public void setComplete(boolean complete) {
+        this.complete = complete;
+    }
+
+    public static boolean isKillThreads() {
+        return killThreads;
+    }
+
+    public static void setKillThreads(boolean killThreads) {
+        CameraChecker.killThreads = killThreads;
     }
 
     public int getCamsTestedCount() {
