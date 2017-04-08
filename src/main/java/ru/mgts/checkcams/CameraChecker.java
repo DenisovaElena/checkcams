@@ -220,7 +220,7 @@ public class CameraChecker {
                 int currentRow = 2;
                 List<CamStatus> resultList = new ArrayList<>();
                 int currentEngineer = 1;
-                while (nameExists && !isComplete() && resultList.size() < maxCamsPerDay) {
+                while (nameExists && !isComplete() && !isAnyLockConditions() && resultList.size() < maxCamsPerDay) {
                     HSSFCell cellDateNetStatus = null;
                     HSSFCell cellNetStatus = null;
                     HSSFCell cellEngineerNum = null;
@@ -292,9 +292,9 @@ public class CameraChecker {
                     }
                 }
 
-                while (!resultList.isEmpty() && !isComplete() && !isMaxTestedPerDayLock() && !isWorkTimeLock() && !isPassedListAtThisDayLock()) {
+                while (!resultList.isEmpty() && !isComplete() && !isAnyLockConditions()) {
                     Iterator<CamStatus> iterator = resultList.iterator();
-                    while (iterator.hasNext() && !isComplete() && !isMaxTestedPerDayLock() && !isWorkTimeLock() && !isPassedListAtThisDayLock()) {
+                    while (iterator.hasNext() && !isComplete() && !isAnyLockConditions()) {
                         CamStatus camStatus = iterator.next();
                         try {
                             if (camStatus.getTask().isDone()) {
@@ -339,7 +339,7 @@ public class CameraChecker {
 
             try {
                 currentTestDateTime = LocalDateTime.now();
-                while ((isMaxTestedPerDayLock() || isWorkTimeLock() || isPassedListAtThisDayLock()) && !isComplete()) {
+                while (isAnyLockConditions() && !isComplete()) {
                     Thread.sleep(1000);
                 }
             }
@@ -348,6 +348,12 @@ public class CameraChecker {
                 LOG.info(e.getMessage());
             }
         }
+    }
+
+
+    public boolean isAnyLockConditions()
+    {
+        return isWorkTimeLock() || isMaxTestedPerDayLock() || isPassedListAtThisDayLock();
     }
 
     public boolean isWorkTimeLock()
